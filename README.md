@@ -49,8 +49,6 @@ be insightful for me.
 ## 2048-python
 Github repo: https://github.com/yangshun/2048-python
 Contributors:
-==
-
 - [Yanghun Tay](http://github.com/yangshun)
 - [Emmanuel Goh](http://github.com/emman27)
 
