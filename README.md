@@ -60,6 +60,9 @@ be insightful for me.
 - Layer class .softmax() function will be used for the output layer
 - for implementing forward pass for hidden neurons, the topological sort will be
 performed on the Synapses (the links), not the neurons. 
+- Used depth-first search to perform a topological sort on the neurons to ensure
+the forward pass is done properly
+    - ie, all input neurons must be forward-passed for the output neuron to forward
 
 
 
