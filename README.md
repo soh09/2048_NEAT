@@ -29,15 +29,33 @@ be insightful for me.
     - create a neuron class: done
     - create a synapse class: done
     - implement genotype functionality: do more research
-    - implement forward pass capability
-    - create a layer class
-    - create a multi-layer perceptron class
+    - implement forward pass capability: done
+        - "forward pass" should forward the activation of a neuron to connected neuron
+    - create a layer class: done
+        - Layer class will be useful for the input and output layers of the network, since the 
+        number of neurons are fixed for these two cases
+        - will have softmax capability to generate probabilities of each move
+    - ~~create a multi-layer perceptron class~~ not necessary, since the point of
+    NEAT is to create flexible topologies
+    - implement ability to forward pass on hidden neurons
+        - use graph data structure for hidden neurons
+        - implement topological search for forward pass capability
+        - 
 
 2. Add NEAT functionality to step 1
     - implement crossover (mating) functionality 
     - implement building a model (phenotype) from the genotype
     - implement mutation
     - implement some sort of species differentiating algorithm
+
+
+## Some Technical Considerations
+### Neural Network
+- Layer class .forward() function will be used for the input layer
+- Layer class .softmax() function will be used for the output layer
+- for implementing forward pass for hidden neurons, the topological sort will be
+performed on the Synapses (the links), not the neurons. 
+
 
 
 
