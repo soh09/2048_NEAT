@@ -1,2 +1,4 @@
 .DS_Store
 .vscode
+neural_net/__pycache__
+2048-python/__pycache__
