@@ -2,7 +2,22 @@ import random
 import math
 from graphviz import Digraph
 
-# Implements Neurons and Synapses
+# function to visualize neural network
+def visualize_neural_network(neurons):
+    dot = Digraph(comment='Neural Network', format='png')
+    dot.attr(rankdir='LR')  # Set the rank direction to left to right
+
+    for neuron in neurons:
+        label = f'#{neuron.id} | Bias={neuron.bias:.2f}\nval={neuron.value:.4f}'
+        dot.node(f'Neuron_{neuron.id}', label=label, shape='ellipse', width='0.1', height='0.5', fontsize='10')
+
+        for synapse in neuron.out_synapses:
+            label = f'w={synapse.weight:.2f}'
+            dot.edge(f'Neuron_{neuron.id}', f'Neuron_{synapse.into.id}', label=label, fontsize = '10')
+
+    return dot
+
+# Implements Neurons, Synapses, Layer, and Network
 
 # the Neuron class
 class Neuron:
@@ -114,18 +129,47 @@ class Layer:
             neuron.value = math.exp(neuron.value) / bottom
 
 
+class Network:
+    def __init__(self, input_layer: Layer, output_layer: Layer) -> None:
+        self.input_l = input_layer
+        self.output_l = output_layer
+
+        self.fitness = 0 # used when there's conflicting genes during crossover
+        self.neurons = self.input_l.neurons + self.output_l.neurons
+        self.sorted_neurons = []
+
+    def set_input(self, inputs): # sets the input neurons' values
+        if len(inputs) != self.input_l.n_neurons:
+            raise Exception(f'Input size mismatch: Expected {self.input_l.n_neurons}, got {len(inputs)}')
+        else:
+            for neuron, val in zip(self.input_l.neurons, inputs):
+                neuron.value = val
+
+    def forward(self):
+        visited = set()
+        sorted_neurons = []
+
+        def dfs(visited_set: set, top_sort: list[Neuron], neuron: Neuron): # depth-first search method as helper
+            for synapse in neuron.out_synapses:
+                connected = synapse.into
+                if connected not in visited_set:
+                    dfs(visited_set, top_sort, connected)
+            visited_set.add(neuron)
+            sorted_neurons.append(neuron)
 
 
-def visualize_neural_network(neurons):
-    dot = Digraph(comment='Neural Network')
-    dot.attr(rankdir='LR')
+        # do topological sort of synapses, and call forward
+        for neuron in self.neurons: # while all neurons haven't been discovered
+            if neuron not in visited:
+                dfs(visited, sorted_neurons, neuron)
+
+        self.sorted_neurons = list(reversed(sorted_neurons)) # topologically sorted neurons
+
+        for neuron in self.sorted_neurons:
+            neuron.forward()
     
-    for neuron in neurons:
-        dot.node(f'Neuron_{neuron.id}', label=f'Neuron {neuron.id}\n Bias: {neuron.bias:.2f}', shape = 'ellipse', height = '0.5', width = '1', fontsize = '10')
+    def add_hidden_neuron(self, neuron: Neuron):
+        self.neurons.append(neuron)
 
-        for synapse in neuron.out_synapses:
-            dot.node(f'Synapse_{synapse.id}', label=f'Synapse {synapse.id}\nWeight: {synapse.weight:.2f}', shape = 'rarrow', fontsize = '10')
-            dot.edge(f'Neuron_{neuron.id}', f'Synapse_{synapse.id}')
-            dot.edge(f'Synapse_{synapse.id}', f'Neuron_{synapse.into.id}')
-
-    return dot
+    def __repr__(self):
+        return f'Neural Network with {len(self.neurons)} neurons'

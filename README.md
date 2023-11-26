@@ -14,7 +14,7 @@ be insightful for me.
 # Roadmap
 
 ## The game component
-1. Borrow code from other 2048 recreation repos: done
+1. Borrow code from other 2048 recreation repos: DONE
     - courtesy of github repo: https://github.com/yangshun/2048-python
     - thank you very much for your code. I will take good care of it.
 2. Integrate the 2048 game with the model
@@ -26,26 +26,31 @@ be insightful for me.
 
 ## The neural network + NEAT component
 1. Implement a simple neural network
-    - create a neuron class: done
-    - create a synapse class: done
+    - create a neuron class: DONE
+    - create a synapse class: DONE
     - implement genotype functionality: do more research
-    - implement forward pass capability: done
+    - implement forward pass capability: DONE
         - "forward pass" should forward the activation of a neuron to connected neuron
-    - create a layer class: done
+    - create a layer class: DONE
         - Layer class will be useful for the input and output layers of the network, since the 
         number of neurons are fixed for these two cases
         - will have softmax capability to generate probabilities of each move
     - ~~create a multi-layer perceptron class~~ not necessary, since the point of
     NEAT is to create flexible topologies
-    - implement ability to forward pass on hidden neurons
-        - use graph data structure for hidden neurons
-        - implement topological search for forward pass capability
-        - 
+    - implement network class: DONE
+        - similar to a MLP, but because of NEAT, doesn't have hidden layers, but
+        has hidden neurons instead
+        - implement ability to forward pass on hidden neurons: DONE
+            - use graph data structure for hidden neurons
+            - implement topological search for forward pass capability: DONE
 
 2. Add NEAT functionality to step 1
-    - implement crossover (mating) functionality 
+    - implement crossover (mating) functionality
     - implement building a model (phenotype) from the genotype
     - implement mutation
+        - make sure no cycles occur as a result
+            - tarjan's strongly connected components alg
+            - or find a spot for node, then only look to connect components after it
     - implement some sort of species differentiating algorithm
 
 
