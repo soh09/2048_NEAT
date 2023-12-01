@@ -46,11 +46,19 @@ be insightful for me.
 
 2. Add NEAT functionality to step 1
     - implement crossover (mating) functionality
-    - implement building a model (phenotype) from the genotype
+        - Add NeuronGene, SynapseGene, NetworkGenome classes for holding genetic information: DONE
+    - implement building a model (phenotype) from the genotype: IN PROGRESS
+            - A Network instance will be the phenotypic expression of a NetworkGene instance
+            - similar to an inheritance structure
     - implement mutation
         - make sure no cycles occur as a result
             - tarjan's strongly connected components alg
             - or find a spot for node, then only look to connect components after it
+        - types of mutations
+            - neuron addition/removal
+            - synapse addition/deactivation
+            - neuron bias change
+            - synapse weight change
     - implement some sort of species differentiating algorithm
 
 
@@ -65,6 +73,13 @@ the forward pass is done properly
     - ie, all input neurons must be forward-passed for the output neuron to forward
 
 
+## Progression
+11/23: Project started
+11/24 -> 11/26: Implemented Neuron, Synapse, Network classes. Implemented forward pass capability.
+11/27: Started writing Genome Classes (NeuronGene, SynapseGene, NetworkGenome). Started implemented crossover logic.
+11/30:  Finished implementing crossover logic. Started logic for NetworkGenome expression into concrete Network class.
+
+
 
 
 
@@ -74,16 +89,14 @@ the forward pass is done properly
 
 ## 2048-python
 Github repo: https://github.com/yangshun/2048-python<br>
-Contributors:
-- [Yanghun Tay](http://github.com/yangshun)
-- [Emmanuel Goh](http://github.com/emman27)
+Contributors: [Yanghun Tay](http://github.com/yangshun), [Emmanuel Goh](http://github.com/emman27)
 
 ## General Resources
 - <a href = 'https://www.youtube.com/watch?v=lAjcH-hCusg'>NEAT algorithm from scratch (it was hard)</a> by Tech with Nikola
-    - for inspiration on how to code NEAT
+    - For inspiration on how to code NEAT
 - <a href = 'https://www.youtube.com/watch?v=b3D8jPmcw-g'>Neuroevolution of Augmenting Topologies (NEAT)</a> by Connor Shorten
-    - for understanding how NEAT works
+    - For understanding how NEAT works
 - <a href = 'https://github.com/karpathy/micrograd/tree/master'>micrograd neural network Library</a> by Andrej Karpathy
-    - for inspiration on how to code a neural network in Python
+    - For inspiration on how to code a neural network in Python
 - <a href = 'https://www.youtube.com/watch?v=VMj-3S1tku0&t=8065s'>Neural Networks Introduction video</a> by Andrej Karpathy
-    - for understanding how neural networks works, and understanding backpropagation
+    - For understanding how neural networks works, and understanding backpropagation

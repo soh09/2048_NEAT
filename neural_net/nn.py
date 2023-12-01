@@ -94,6 +94,7 @@ class Synapse:
     def __str__(self):
         return f'Synapse {self.id}'
     
+
 # Layer will be used for the input and output layer
 class Layer:
     def __init__(self, neurons: list[Neuron]):
@@ -129,14 +130,140 @@ class Layer:
             neuron.value = math.exp(neuron.value) / bottom
 
 
+class NeuronGene: # class for holding neuron information, but doesn't have neuron functionality
+    def __init__(self, id: int, bias: float = None, activation_f = None):
+        self.id = id
+        self.bias = bias
+        self.activation_f = activation_f
+
+        ################## not sure if this is the right approach
+        self.expressed_neuron = self.express(self)
+    
+    def express(self):
+        return Neuron(self.id, self.bias, self.activation_f)
+
+    def __repr__(self):
+        return f'[Neuron {self.id}] Bias: {self.bias}'
+    
+    # crossover only gets called when the id are the same
+    @staticmethod
+    def crossover(gene1: 'NeuronGene', gene2: 'NeuronGene'):
+        if gene1.id != gene2.id:
+            raise Exception(f'NeuronGene ids not matching: {gene1.id} != {gene2.id}')
+        bias = random.choice([gene1.bias, gene2.bias])
+        return NeuronGene(gene1.id, bias, gene1.activation_f)
+
+class SynapseGene: # class for holding neuron information, but doesn't have synapse functionality
+    def __init__(self, id: int, outof: NeuronGene, into: NeuronGene, weight: float, is_on: bool): ############## how to find neuron by IDs??
+        self.id = id # innovation id of the synapse
+        self.outof = outof # the origin neuron id of the synapse
+        self.into = into # the destination neuron id of the synapse
+        self.weight = weight
+        self.is_on = is_on # if the synapse is disabled or not
+
+    def express(self):
+        return Synapse(self.id, self.outof.expressed_neuron, self.into.expressed_neuron, self.weight, self.is_on)
+
+    def __repr__(self):
+        return f'[Synapse {self.id}] Neuron {self.outof.id} -> Neuron {self.into.id}, Weight: {self.weight}, {"Enabled" if self.is_on else "Disabled"}'
+    
+    # crossover only gets called when the id are the same
+    @staticmethod
+    def crossover(gene1: 'SynapseGene', gene2: 'SynapseGene'):
+        if gene1.id != gene2.id: # assert that ids are the same 
+            raise Exception(f'NeuronGene ids not matching: {gene1.id} != {gene2.id}')
+        if gene1.outof.id != gene2.outof.id:
+            raise Exception(f'NeuronGene OutOf ids not matching: {gene1.outof.id} != {gene2.outof.id}')
+        if gene1.into.id != gene2.into.id:
+            raise Exception(f'NeuronGene InTo ids not matching:  {gene1.into.id} != {gene2.into.id}')
+        is_on = random.choice([gene1.is_on, gene2.is_on])
+        weight = random.choice([gene1.weight, gene2.weight])
+        return SynapseGene(gene1.id, gene1.into_id, gene1.outof_id, weight, is_on)
+
+        
+# This class holds all the genetic information of a network
+# Such as information about deactivated synapses, all neurons, and all synapses
+class NetworkGenome:
+    def __init__(self, input_neurons: list[NeuronGene], output_neurons: list[NeuronGene], neuron_gene: list[NeuronGene], synapse_gene: list[SynapseGene]):
+        self.input_neurons = input_neurons
+        self.output_neurons = output_neurons
+
+        self.neuron_gene = neuron_gene 
+        self.synapse_gene = synapse_gene
+
+        self.neuron_ids = set([g.id for g in neuron_gene + input_neurons + output_neurons])
+        self.synapse_ids = set([s.id for s in synapse_gene])
+
+    def find_neuron(self, id):
+        for ng in self.neuron_gene:
+            if ng.id == id:
+                return ng
+        raise Exception(f'id {id} not found')
+
+    def find_synapse(self, id):
+        for sg in self.synapse_gene:
+            if sg.id == id:
+                return sg
+        raise Exception(f'id {id} not found')
+
+    def __repr__(self):
+        return f'Neural Network Genome with {len(self.neuron_gene)} neurons, {len(self.synapse_gene)} synapses'
+    
+    def mutate(self):
+        # neuron add/removal
+            # ensure input neurons dont get deleted
+        # synapse activation/deactivation
+        # synapse weight change
+        # neuron bias change
+
+        pass # function shouldn't have any return as it modifies internal state
+    
+
+    # will create a static method that takes in two NetworkGenes, crossover, and return the offspring
+    @staticmethod
+    def crossover(parent1: 'Network', parent2: 'Network'):
+        # assigns dominant to fitter Network
+        dominant, recessive = (parent1, parent2) if parent1.fitness > parent2.fitness else (parent2, parent1)
+
+        neuron_gene = []
+        synapse_gene = []
+
+        for ng in dominant.genome.neuron_gene:
+            if ng.id in recessive.genome.neuron_ids: 
+                # if this NeuronGene is in the recessive NetworkGenome, do crossover
+                hybrid_neuron = NeuronGene.crossover(ng, recessive.genome.find_neuron(ng.id))
+                neuron_gene.append(hybrid_neuron)
+            else:
+                # if this neuron is only present in the dominant, add it to the genome
+                neuron_gene.append(ng)
+
+        for sg in dominant.genome.synapse_gene:
+            if sg.id in recessive.genome.synapse_ids:
+                # if this SynapseGene is in the recessive NetworkGenome, do crossover
+                hybrid_synapse = SynapseGene.crossover(sg, recessive.genome.find_synapse(sg.id))
+                synapse_gene.append(hybrid_synapse)
+            else:
+                # if this synapse is only present in the dominant, add it to the genome
+                synapse_gene.append(sg)
+
+        return NetworkGenome(parent1.input_l, parent2.output_l, neuron_gene, synapse_gene)
+
+
 class Network:
-    def __init__(self, input_layer: Layer, output_layer: Layer) -> None:
-        self.input_l = input_layer
-        self.output_l = output_layer
+    #################### change so that initializes from NetworkGenome instance
+    def __init__(self, genome: NetworkGenome):
+        self.input_l = Layer([n.expressed_neuron for n in genome.input_neurons])
+        self.output_l = Layer([n.expressed_neuron for n in genome.output_neurons])
+        self.genome = genome
 
         self.fitness = 0 # used when there's conflicting genes during crossover
-        self.neurons = self.input_l.neurons + self.output_l.neurons
-        self.sorted_neurons = []
+        self.neurons = self.input_l.neurons + self.output_l.neurons + [n.expressed_neuron for n in genome.neuron_gene]
+        self.sorted_neurons = list[Neuron]
+
+        self.synapses = [s.express() for s in genome.synapse_gene]
+
+        # connects the synapses to the corresponding neurons
+        self.connect()
 
     def set_input(self, inputs): # sets the input neurons' values
         if len(inputs) != self.input_l.n_neurons:
@@ -167,9 +294,18 @@ class Network:
 
         for neuron in self.sorted_neurons:
             neuron.forward()
+
+    def connect(self): ######################### must implement
+        # loop through synapses to connect them to the proper neurons using neuron.connect(synapse)
+        pass
     
-    def add_hidden_neuron(self, neuron: Neuron):
+
+    # utility functions
+    def add_hidden_neuron(self, neuron: Neuron): # unused function, because neurons will not be added to networks, but genome instead
         self.neurons.append(neuron)
 
+    def add_hidden_synapse(self, synapse: Synapse): # likewise to add_hidden_neuron
+        self.synapses.append(synapse)
+
     def __repr__(self):
-        return f'Neural Network with {len(self.neurons)} neurons'
+        return f'Neural Network with {len(self.neurons)} neurons, {len(self.synapses)} synapses'
