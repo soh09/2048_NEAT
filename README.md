@@ -74,10 +74,10 @@ the forward pass is done properly
 
 
 ## Progression
-11/23: Project started
-11/24 -> 11/26: Implemented Neuron, Synapse, Network classes. Implemented forward pass capability.
-11/27: Started writing Genome Classes (NeuronGene, SynapseGene, NetworkGenome). Started implemented crossover logic.
-11/30:  Finished implementing crossover logic. Started logic for NetworkGenome expression into concrete Network class.
+11/23: Project started<br>
+11/24 -> 11/26: Implemented Neuron, Synapse, Network classes. Implemented forward pass capability.<br>
+11/27: Started writing Genome Classes (NeuronGene, SynapseGene, NetworkGenome). Started implemented crossover logic.<br>
+11/30:  Finished implementing crossover logic. Started logic for NetworkGenome expression into concrete Network class.<br>
 
 
 
