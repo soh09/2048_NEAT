@@ -48,8 +48,8 @@ be insightful for me.
     - implement crossover (mating) functionality
         - Add NeuronGene, SynapseGene, NetworkGenome classes for holding genetic information: DONE
     - implement building a model (phenotype) from the genotype: IN PROGRESS
-            - A Network instance will be the phenotypic expression of a NetworkGene instance
-            - similar to an inheritance structure
+        - A Network instance will be the phenotypic expression of a NetworkGene instance
+        - similar to an inheritance structure
     - implement mutation
         - make sure no cycles occur as a result
             - tarjan's strongly connected components alg
