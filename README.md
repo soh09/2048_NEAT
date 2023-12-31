@@ -69,6 +69,7 @@ be insightful for me.
 - [ ] think about neuron and synapse cross over probabilities (dominant vs recessive)
 - [ ] add a nice visual for the structure of the classes, methods, and attributes
 - [ ] add nicer comments
+- [ ] fix bug where there is duplicate synapses sometimes. figure out where it comes from
 
 ## Some Technical Considerations
 ### Neural Network
@@ -89,7 +90,8 @@ the forward pass is done properly
 | 11/24 ~ 11/26 | Implemented Neuron, Synapse, Network classes. Implemented forward pass capability. |
 | 11/27 | Started writing Genome Classes (NeuronGene, SynapseGene, NetworkGenome). Started implemented crossover logic. | 
 | 11/30 | Started implementing crossover logic. Started logic for NetworkGenome expression into concrete Network class. |
-| 12/7 | Finished implementing crossover logic. Finished logic forNetworkGenome expression into concrete Network class. Updated layout of README. |
+| 12/7 | Working on implementing crossover logic. Finished logic forNetworkGenome expression into concrete Network class. Updated layout of README. |
+| 12/31 | Testing implementing crossover logic. Improved visualize_neural_network function. | 
 
 # Attribution
 

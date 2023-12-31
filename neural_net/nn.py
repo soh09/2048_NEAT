@@ -2,6 +2,7 @@ import random
 import math
 import copy
 
+
 # Implements Neurons, Synapses, Layer, and Network
 
 # the Neuron class
@@ -158,7 +159,7 @@ class SynapseGene: # class for holding neuron information, but doesn't have syna
     
     @staticmethod
     def copy_update_synapse(old_synapse, new_outof, new_into):
-        return Synapse(old_synapse.id, new_outof, new_into, old_synapse.weight, old_synapse.is_on)
+        return SynapseGene(old_synapse.id, new_outof, new_into, old_synapse.weight, old_synapse.is_on)
     
     # crossover only gets called when the id are the same
     @staticmethod
@@ -237,6 +238,7 @@ class NetworkGenome:
             output_l_genes.append(hybrid_neuron)
 
         # initialize child NetworkGenome so we can access various NetworkGenome attributes
+        # need child.neuron_ids attribute for the synapse crossover, because synapses must be connected
         # for example, having access to child.neuron_ids makes crossing over synapses easier
         child = cls(input_l_genes, output_l_genes, neuron_gene, synapse_gene, dominant, recessive)
 
@@ -244,7 +246,7 @@ class NetworkGenome:
             if sg.id in recessive.synapse_ids:
                 # if this SynapseGene is in the recessive NetworkGenome, do crossover
                 hybrid_synapse = SynapseGene.crossover(sg, recessive.find_synapse(sg.id), child.neuron_ids)
-                synapse_gene.append(hybrid_synapse)
+                child.synapse_gene.append(hybrid_synapse)
             else:
                 # if this synapse is only present in the dominant, create new genome with same parameters, add it to the genome
                 into_id = sg.into.id
@@ -252,9 +254,12 @@ class NetworkGenome:
                 child_into_neuron = child.find_neuron(into_id)
                 child_outof_neuron = child.find_neuron(outof_id)
                 new_synapse = SynapseGene.copy_update_synapse(sg, child_outof_neuron, child_into_neuron)
-                synapse_gene.append(new_synapse)
+                child.synapse_gene.append(new_synapse)
 
-        return NetworkGenome(input_l_genes, output_l_genes, neuron_gene, synapse_gene, parent1, parent2)
+        # need to manually run this to ensure child genome has synapse_gene dict
+        child.synapse_ids = {s.id: s for s in child.synapse_gene}
+
+        return child
 
     def find_neuron(self, id):
         if id in self.neuron_ids:
@@ -291,6 +296,10 @@ class Network:
 
         self.fitness = 0 # used when there's conflicting genes during crossover
         self.neurons = self.input_l.neurons + self.output_l.neurons + [n.expressed_neuron for n in genome.neuron_gene]
+
+        for n in genome.neuron_gene:
+            print(n.expressed_neuron)
+            print(n.expressed_neuron.out_synapses)
         self.sorted_neurons = list[Neuron]
 
         self.synapses = [s.express() for s in genome.synapse_gene]
