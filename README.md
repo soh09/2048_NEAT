@@ -35,8 +35,7 @@ be insightful for me.
         - Layer class will be useful for the input and output layers of the network, since the 
         number of neurons are fixed for these two cases
         - will have softmax capability to generate probabilities of each move
-    - ~~create a multi-layer perceptron class~~ not necessary, since the point of
-    NEAT is to create flexible topologies
+    - ~~create a multi-layer perceptron class~~ not necessary, since the point of NEAT is to create flexible topologies
     - [x] implement network class
         - similar to a MLP, but because of NEAT, doesn't have hidden layers, but
         has hidden neurons instead
@@ -54,22 +53,29 @@ be insightful for me.
         - similar to an inheritance structure
     - [ ] implement mutation
         - make sure no cycles occur as a result
-            - tarjan's strongly connected components alg
-            - or find a spot for node, then only look to connect components after it
+            - perform top sort, choose source neuron, then choose destination neuron in the later order
+        - [x] implement data structure that facilitates quick validation of potential mutation (LSD class)
+            
         - types of mutations
-            - neuron addition/removal
+            - neuron addition
                 - neuron addition when there is an new id?
-            - synapse addition/deactivation
-                - synapse addition when there is an new id?
+            - synapse addition
+                - for the source neuron, we want to choose from input neurons and hidden neurons
+                - for the destination neuron, we want to choose from hidden or output neurons
+                - chosen synapse must not create a loop, and ideally source neuron should be lower order in a topological sort
             - neuron bias change
             - synapse weight change
     - [ ] implement some sort of species differentiating algorithm
+    - [ ] implement logic for evolving networks
+        - when to "kill" certain underperforming species
+        - probabilities for sexual reproduction, asexual reproduction, etc
 
 ### To Do
 - [ ] think about neuron and synapse cross over probabilities (dominant vs recessive)
 - [ ] add a nice visual for the structure of the classes, methods, and attributes
 - [ ] add nicer comments
-- [ ] fix bug where there is duplicate synapses sometimes. figure out where it comes from
+- [x] fix bug where there is duplicate synapses sometimes. figure out where it comes from
+- [ ] think about how to have a global counter variable for innovation number
 
 ## Some Technical Considerations
 ### Neural Network
@@ -80,8 +86,8 @@ performed on the Synapses (the links), not the neurons.
 - Used depth-first search to perform a topological sort on the neurons to ensure
 the forward pass is done properly
     - ie, all input neurons must be forward-passed for the output neuron to forward
-
-
+- depth-first search is used for creating new connections as a mutation, to ensure no cycles emerge
+    - with this approach, a hidden neuron can feed back into a input neuron, should I allow this?
 
 ## Progression
 | date | details |
@@ -91,7 +97,10 @@ the forward pass is done properly
 | 11/27 | Started writing Genome Classes (NeuronGene, SynapseGene, NetworkGenome). Started implemented crossover logic. | 
 | 11/30 | Started implementing crossover logic. Started logic for NetworkGenome expression into concrete Network class. |
 | 12/7 | Working on implementing crossover logic. Finished logic forNetworkGenome expression into concrete Network class. Updated layout of README. |
-| 12/31 | Testing implementing crossover logic. Improved visualize_neural_network function. | 
+| 12/31 | Implementing and testing crossover logic. Improved visualize_neural_network function. |
+| 1/1 | Implementing mutation logic. |
+| 6/19 | REBOOTING PROJECT. Reviewing Neural Net code.| 
+| 6/23 | Implemented LSD class, which implements quick removal, set difference, and sampling. |
 
 # Attribution
 
@@ -108,3 +117,5 @@ Contributors: [Yanghun Tay](http://github.com/yangshun), [Emmanuel Goh](http://g
     - For inspiration on how to code a neural network in Python
 - <a href = 'https://www.youtube.com/watch?v=VMj-3S1tku0&t=8065s'>Neural Networks Introduction video</a> by Andrej Karpathy
     - For understanding how neural networks works, and understanding backpropagation
+- <a href = 'https://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf'>Evolving Neural Networks through Augmenting Topologies
+    - The original NEAT paper, which provides me with details about the implementation
