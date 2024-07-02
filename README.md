@@ -101,6 +101,7 @@ the forward pass is done properly
 | 1/1 | Implementing mutation logic. |
 | 6/19 | REBOOTING PROJECT. Reviewing Neural Net code.| 
 | 6/23 | Implemented LSD class, which implements quick removal, set difference, and sampling. |
+| 7/1 | I think I fixed the synapse addition logic FINALLY!!! |
 
 # Attribution
 

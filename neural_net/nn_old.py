@@ -1,5 +1,6 @@
 import random
 import math
+from LSD import LSD
 
 NEURON_BIAS_CHANGE_CHANCE = 0.00
 NEURON_ADD_CHANCE = 0.00
@@ -304,7 +305,7 @@ class NetworkGenome:
             for synapse in neuron.out_synapses:
                 connected = synapse.into
                 if connected not in visited_set and connected in search_set:
-                    # need to check if connected in serach_set, because we want to limit top sort of neurons contained in neuron_list
+                    # need to check if connected in search_set, because we want to limit top sort of neurons contained in neuron_list
                     dfs(visited_set, top_sort, connected, search_set)
             visited_set.add(neuron)
             sorted_neurons.append(neuron)
@@ -370,46 +371,58 @@ class NetworkGenome:
             # need efficient set REMOVAL operation in case this outof_neuron is invalid (candidates list, has to be ordered) 
 
         if synapse_add:
+            attempts = 3
             sorted_neurons = list(reversed(self.top_sort(self.hidden_output_neurons))) # top sort of hidden
+            sorted_neurons_d = {n: i for (n, i) in zip(sorted_neurons, range(len(sorted_neurons)))}
+            sorted_neurons_set = set(sorted_neurons)
             print(sorted_neurons)
-            outof_candidates = list(range(len(self.all_neuron_genes) - 1))
-            input_outof_candidates = list(range(len(self.input_neurons) - 1))
-            print(outof_candidates)
+            # outof_candidates = list(range(len(self.input_hidden_neurons) - 1))
+            hidden_outof_candidates = LSD(self.neuron_gene)
+            input_outof_candidates = LSD(self.input_neurons)
+            # print(outof_candidates)
             
+            allowed_neurons = set()
+            outof_neuron = None
             while True: # until a valid new connection is found
-                if len(outof_candidates) == 0: # if there are no more source neuron candidates, give up adding a synapse
+                if len(hidden_outof_candidates) + len(input_outof_candidates) == 0: # if there are no more source neuron candidates, give up adding a synapse
                     break
 
                 # determine if outof neuron is going to be hidden or input neurons
                 from_input_chance = len(self.input_neurons) / len(self.input_hidden_neurons)
                 from_input = random.choices([True, False], [from_input_chance, 1 - from_input_chance])
 
-                if from_input:
-                    outof_neuron_id = random.choice(input_outof_candidates)
-                    outof_neuron = self.input_neurons[outof_neuron_id] # pick a random input neuron
-                    allowed_neurons = set(sorted_neurons) - set([s.into for s in outof_neuron.out_synapses])
+                if from_input: # from input neuron -> hidden neuron or output neuron
+                    # outof_neuron_id = random.choice(input_outof_candidates)
+                    # outof_neuron = self.input_neurons[outof_neuron_id] # pick a random input neuron
+                    outof_neuron = input_outof_candidates.sample()
+                    allowed_neurons = sorted_neurons_set - set([s.into for s in outof_neuron.out_synapses])
 
                     if not allowed_neurons:
-                        input_outof_candidates.remove(outof_neuron_id)
+                        input_outof_candidates.remove(outof_neuron)
 
+                else: # from hidden neuron -> later hidden neuron or output neuron
+                    outof_neuron = hidden_outof_candidates.sample()
+                    outof_neuron_idx = sorted_neurons_d[outof_neuron]
+                    later_neurons = sorted_neurons[outof_neuron_idx + 1:] # neurons that topologically come after outof_neuron
+                    allowed_neurons = set(later_neurons) - set([s.into for s in outof_neuron.out_synapses])
 
-                outof_neuron_id = random.choice(outof_candidates) # exclude the last neuron
-                print(outof_neuron_id)
-                print(sorted_neurons)
-                outof_neuron = sorted_neurons[outof_neuron_id]
-
-                allowed_neurons = set(sorted_neurons[outof_neuron_id + 1:]) - set([s.into for s in outof_neuron.out_synapses])
+                    if not allowed_neurons:
+                        hidden_outof_candidates.remove(outof_neuron)
+                        break
                 
-                if len(allowed_neurons) == 0: # if there are no valid destination neurons for this source neuron, pick again
-                    # remove this neuron from the source neuron candidates
-                    sorted_neurons.remove(outof_neuron)
-                    continue
+                if allowed_neurons:
+                    into_neuron = random.choice(list(allowed_neurons))
+                    new_synapse = SynapseGene(99, outof_neuron, into_neuron, random.uniform(0, 1), True)
+                    self.synapse_gene.append(new_synapse)
+                    print(f'[synapse addition mutation] {new_synapse}')
+                    break
+                
+                attempts -= 1
+                if attempts == 0:
+                    print('3 attempts were made at creating a new synapse, but failed')
+                    break
 
-                into_neuron = random.choice(list(allowed_neurons))
-                new_synapse = SynapseGene(99, outof_neuron, into_neuron, random.uniform(0, 1), True)
-                self.synapse_gene.append(new_synapse)
-                print(f'[synapse addition mutation] {new_synapse}')
-                break
+
 
             # sorted_neurons = list(reversed(self.top_sort(self.input_hidden_neurons))) # top sort of hidden + output neurons
             # print(sorted_neurons)
