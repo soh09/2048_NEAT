@@ -42,7 +42,7 @@ class LSD: # LSD = List Set Dictionary (because it uses all these data structure
         return len(self.node_list)
     
     def __str__(self):
-        return self.node_list
+        return '[' + ', '.join(str(node) for node in self.node_list) + ']'
 
     def __repr__(self):
         return '[' + ', '.join(str(node) for node in self.node_list) + ']'

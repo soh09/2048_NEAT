@@ -1,13 +1,15 @@
 from graphviz import Digraph
-import nn_old as nn_old
+import nn as nn
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 # function to visualize neural network
-def visualize_net(network: nn_old.Network, orientation = 'LR', plot_genome = False):
+def visualize_net(network: nn.Network, orientation = 'LR', plot_genome = False):
     dot = Digraph(comment='Neural Network', format='png')
     dot.attr(rankdir=orientation)  # Set the rank direction to left to right
 
     for neuron in network.neurons:
-        if isinstance(neuron, nn_old.NeuronGene): # if this is a NetworkGenome visualization, NeuronGene have no value
+        if isinstance(neuron, nn.NeuronGene): # if this is a NetworkGenome visualization, NeuronGene have no value
             label = f'#{neuron.id} | Bias={neuron.bias:.2f}'
         else:
             label = f'#{neuron.id} | Bias={neuron.bias:.2f}\nval={neuron.value:.4f}'
@@ -59,3 +61,47 @@ def visualize_genome(genome, orientation='BT'):
             s.node(f'Neuron_{output_n.id}')
 
     return dot
+
+
+
+# this code is from GPT-4o, you are amazing.
+def display_gene(synapse_genes):
+
+    # Extracting all innovation IDs and determining the range
+    ids = [sg.id for sg in synapse_genes]
+    min_id = min(ids)
+    max_id = max(ids)
+
+    fig, ax = plt.subplots(figsize=(max_id * 0.8, 0.8))
+
+    # Mapping each id to its corresponding synapse gene
+    id_to_synapse = {sg.id: sg for sg in synapse_genes}
+
+    # Setting the axis limits
+    ax.set_xlim(0, max_id - min_id + 1)
+    ax.set_ylim(0, 1)
+
+    # Hiding the axes
+    ax.axis('off')
+
+    for i in range(min_id, max_id + 1):
+        # Create a rectangle
+        rect = patches.Rectangle((i - min_id, 0), 1, 1, edgecolor='black', facecolor='white')
+        ax.add_patch(rect)
+
+        if i in id_to_synapse:
+            sg = id_to_synapse[i]
+            # Add text for the innovation ID at the top
+            ax.text(i - min_id + 0.5, 0.75, str(sg.id), ha='center', va='center', fontsize=10)
+
+            # Add text for the neurons it connects
+            ax.text(i - min_id + 0.5, 0.5, f"{sg.outof.id} -> {sg.into.id}", ha='center', va='center', fontsize=10)
+
+            # Indicate if the synapse is disabled
+            if not sg.is_on:
+                ax.text(i - min_id + 0.5, 0.25, "DIS", ha='center', va='center', fontsize=10, color='gray')
+        else:
+            # Empty box for skipped innovation numbers
+            ax.text(i - min_id + 0.5, 0.5, "", ha='center', va='center', fontsize=10)
+
+    plt.show()

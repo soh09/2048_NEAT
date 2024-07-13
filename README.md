@@ -59,12 +59,12 @@ be insightful for me.
         - types of mutations
             - neuron addition
                 - neuron addition when there is an new id?
-            - synapse addition
+            - [x] synapse addition
                 - for the source neuron, we want to choose from input neurons and hidden neurons
                 - for the destination neuron, we want to choose from hidden or output neurons
                 - chosen synapse must not create a loop, and ideally source neuron should be lower order in a topological sort
-            - neuron bias change
-            - synapse weight change
+            - neuron bias change (low priority)
+            - synapse weight change 
     - [ ] implement some sort of species differentiating algorithm
     - [ ] implement logic for evolving networks
         - when to "kill" certain underperforming species
@@ -102,6 +102,7 @@ the forward pass is done properly
 | 6/19 | REBOOTING PROJECT. Reviewing Neural Net code.| 
 | 6/23 | Implemented LSD class, which implements quick removal, set difference, and sampling. |
 | 7/1 | I think I fixed the synapse addition logic FINALLY!!! |
+| 7/7 | Added innovation ID logic. Added Gene visualization like in the paper.|
 
 # Attribution
 
