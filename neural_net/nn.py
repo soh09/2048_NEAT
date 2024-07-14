@@ -234,7 +234,7 @@ class NetworkGenome:
         self.fitness = 0
 
     @classmethod
-    def from_crossover(cls, parent1: 'Network', parent2: 'Network'):
+    def from_crossover(cls, parent1, parent2):
         # assigns dominant to fitter Network
         dominant, recessive = None, None
         if isinstance(parent1, Network):
@@ -332,7 +332,6 @@ class NetworkGenome:
     def mutate(self):
         # synapse weight change
         for sg in self.synapse_gene:
-            # synapse_switch = random.choices([True, False], [SYNAPSE_SWITCH_CHANCE, 1 - SYNAPSE_SWITCH_CHANCE])[0]
             synapse_weight_change = random.random() <= SYNAPSE_WEIGHT_CHANGE_CHANCE
             # if synapse_switch:
             #     print(f'[synapse en/disable mutation] @ sg {sg.id}')
@@ -448,6 +447,41 @@ class NetworkGenome:
         self.synapse_ids[new_synapse.id] = new_synapse
 
 
+    @classmethod
+    def distance(cls, net1: 'NetworkGenome', net2: 'NetworkGenome', w_disjoint :float, w_excess :float, w_weight :float):
+        N = max(len(net1.synapse_gene), len(net2.synapse_gene))
+
+        set1 = set([sg.id for sg in net1.synapse_gene])
+        set2 = set([sg.id for sg in net2.synapse_gene])
+
+        max_net1 = net1.synapse_gene[-1].id
+        max_net2 = net2.synapse_gene[-1].id
+
+        disjoint, excess, common, weight_diff = 0, 0, 0, 0
+
+        for sg in net1.synapse_gene:
+            if sg.id not in set2:
+                if sg.id < max_net2:
+                    disjoint += 1
+                else:
+                    excess += 1
+            else:
+                weight_diff += abs(sg.weight - net2.find_synapse(sg.id).weight)
+                common += 1
+
+        for sg in net2.synapse_gene:
+            if sg.id not in set1:
+                if sg.id < max_net1:
+                    disjoint += 1
+                else:
+                    excess += 1
+
+        w_bar = weight_diff / common
+
+        delta = disjoint * w_disjoint + excess * w_excess + w_bar * w_weight
+        
+        return delta
+
     def __repr__(self):
         return f'Neural Network Genome with {len(self.neuron_ids)} neurons, {len(self.synapse_ids)} synapses'
 
@@ -514,3 +548,6 @@ class Network:
     def set_fitness(self, fitness):
         self.fitness = fitness
         self.genome.fitness = fitness
+
+    def play_game(self):
+        pass

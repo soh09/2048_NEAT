@@ -51,7 +51,7 @@ be insightful for me.
     - [x] implement building a model (phenotype) from the genotype
         - A Network instance will be the phenotypic expression of a NetworkGene instance
         - similar to an inheritance structure
-    - [ ] implement mutation
+    - [x] implement mutation
         - make sure no cycles occur as a result
             - perform top sort, choose source neuron, then choose destination neuron in the later order
         - [x] implement data structure that facilitates quick validation of potential mutation (LSD class)
@@ -69,6 +69,9 @@ be insightful for me.
     - [ ] implement logic for evolving networks
         - when to "kill" certain underperforming species
         - probabilities for sexual reproduction, asexual reproduction, etc
+
+3. Simulation of Generations and Populations
+    - [ ] create Sandbox class, which takes in a Network class, instantiates a Game object, and makes it play till game over/win condition is met
 
 ### To Do
 - [ ] think about neuron and synapse cross over probabilities (dominant vs recessive)
@@ -90,19 +93,20 @@ the forward pass is done properly
     - with this approach, a hidden neuron can feed back into a input neuron, should I allow this?
 
 ## Progression
-| date | details |
-| --- | --- |
+| date  | details |
+| ----- | ------- |
 | 11/23 | Project started |
 | 11/24 ~ 11/26 | Implemented Neuron, Synapse, Network classes. Implemented forward pass capability. |
 | 11/27 | Started writing Genome Classes (NeuronGene, SynapseGene, NetworkGenome). Started implemented crossover logic. | 
 | 11/30 | Started implementing crossover logic. Started logic for NetworkGenome expression into concrete Network class. |
-| 12/7 | Working on implementing crossover logic. Finished logic forNetworkGenome expression into concrete Network class. Updated layout of README. |
+| 12/7  | Working on implementing crossover logic. Finished logic forNetworkGenome expression into concrete Network class. Updated layout of README. |
 | 12/31 | Implementing and testing crossover logic. Improved visualize_neural_network function. |
-| 1/1 | Implementing mutation logic. |
-| 6/19 | REBOOTING PROJECT. Reviewing Neural Net code.| 
-| 6/23 | Implemented LSD class, which implements quick removal, set difference, and sampling. |
-| 7/1 | I think I fixed the synapse addition logic FINALLY!!! |
-| 7/7 | Added innovation ID logic. Added Gene visualization like in the paper.|
+|  1/1  | Implementing mutation logic. |
+|  6/19 | REBOOTING PROJECT. Reviewing Neural Net code.| 
+|  6/23 | Implemented LSD class, which implements quick removal, set difference, and sampling. |
+|  7/1  | I think I fixed the synapse addition logic FINALLY!!! |
+|  7/7  | Added innovation ID logic. Added Gene visualization like in the paper.|
+|  7/13 | Implemented distance function. Started work on game code to make neural network be able to play it, called Sandbox. |
 
 # Attribution
 

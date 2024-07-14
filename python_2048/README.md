@@ -23,3 +23,7 @@ Contributors:
 
 - [Yanghun Tay](http://github.com/yangshun)
 - [Emmanuel Goh](http://github.com/emman27)
+
+
+EDITS by soh09
+- Had to rename folder name to python_2048 instead of 2048-python due to importing issues.
