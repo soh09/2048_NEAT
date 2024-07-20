@@ -1,6 +1,6 @@
 import random
 import math
-from LSD import LSD
+from .LSD import LSD
 
 
 NEURON_ADD_CHANCE = 1
@@ -534,6 +534,10 @@ class Network:
 
         for neuron in self.sorted_neurons:
             neuron.forward()
+
+    def flush_values(self):
+        for neuron in self.sorted_neurons:
+            neuron.flush_value()
 
     # utility functions
     def add_hidden_neuron(self, neuron: Neuron): # unused function, because neurons will not be added to networks, but genome instead
