@@ -3,9 +3,9 @@ import math
 from .LSD import LSD
 
 
-NEURON_ADD_CHANCE = 1
-SYNAPSE_WEIGHT_CHANGE_CHANCE = 0
-SYNAPSE_ADD_CHANCE = 1
+NEURON_ADD_CHANCE = 0.01
+SYNAPSE_WEIGHT_CHANGE_CHANCE = 0.01
+SYNAPSE_ADD_CHANCE = 0.01
 
 # Implements Neurons, Synapses, Layer, and Network
 
@@ -114,6 +114,9 @@ class Layer:
 
     def get_activations(self): # utility function to get activation of all neurons in layer
         return [neuron.value for neuron in self.neurons]
+
+    def list_activations(self): # utility function that prints out activation of layer in readable format
+        return [f'neuron {neuron.id}: {neuron.value}' for neuron in self.neurons]
             
     def softmax(self): # perform a softmax operation of this layer
         bottom = sum(math.exp(neuron.get_activation()) for neuron in self.neurons)

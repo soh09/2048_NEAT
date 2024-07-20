@@ -1,5 +1,5 @@
 from graphviz import Digraph
-import nn as nn
+import neural_net.nn as nn
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
@@ -37,31 +37,38 @@ def visualize_net(network: nn.Network, orientation = 'LR', plot_genome = False):
     return dot
 
 # function to visualize neural network genome
-def visualize_genome(genome, orientation='BT'):
+def visualize_genome(genome, orientation='BT', show_label = True, ranksep = '1'):
     dot = Digraph(comment='Neural Network Genome', format='png')
-    dot.attr(rankdir=orientation)
+    dot.attr(rankdir=orientation, ranksep = ranksep)
 
     for neuron in genome.all_neuron_genes:
         label = f'#{neuron.id} | Bias={neuron.bias:.2f}'
-        dot.node(f'Neuron_{neuron.id}', label=label, shape='ellipse', width='0.1', height='0.5', fontsize='10')
+        if show_label:
+            dot.node(f'Neuron_{neuron.id}', label=label, shape='ellipse', width='0.1', height='0.5', fontsize='10')
+        else:
+            dot.node(f'Neuron_{neuron.id}', shape='ellipse', width='0.1', height='0.5', fontsize='10')
 
     for synapse in genome.synapse_gene:
         label = f'id={synapse.id}, w={synapse.weight:.2f}'
         color = 'red' if not synapse.is_on else 'green'
-        dot.edge(f'Neuron_{synapse.outof.id}', f'Neuron_{synapse.into.id}', label=label, fontsize='10', color=color)
+        if show_label:
+            dot.edge(f'Neuron_{synapse.outof.id}', f'Neuron_{synapse.into.id}', label=label, fontsize='10', color=color)
+        else:
+            dot.edge(f'Neuron_{synapse.outof.id}', f'Neuron_{synapse.into.id}', color=color)
 
     with dot.subgraph() as s:
         s.attr(rank='same')
-        for input_n in genome.input_neurons:
-            s.node(f'Neuron_{input_n.id}')
+        sorted_input_neurons = sorted(genome.input_neurons, key=lambda n: n.id)
+        for input_n in sorted_input_neurons:
+            s.node(f'Neuron_{input_n.id}', fontsize='10')
 
     with dot.subgraph() as s:
         s.attr(rank='same')
-        for output_n in genome.output_neurons:
-            s.node(f'Neuron_{output_n.id}')
+        sorted_output_neurons = sorted(genome.output_neurons, key=lambda n: n.id)
+        for output_n in sorted_output_neurons:
+            s.node(f'Neuron_{output_n.id}', fontsize='10')
 
     return dot
-
 
 
 # this code is from GPT-4o, you are amazing.

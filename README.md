@@ -107,6 +107,7 @@ the forward pass is done properly
 |  7/1  | I think I fixed the synapse addition logic FINALLY!!! |
 |  7/7  | Added innovation ID logic. Added Gene visualization like in the paper.|
 |  7/13 | Implemented distance function. Started work on game code to make neural network be able to play it, called Sandbox. |
+|  7/20 | Started development of simulation. Testing with no selection logic yet, population = 1000. Random mutations every iterations. |  
 
 # Attribution
 

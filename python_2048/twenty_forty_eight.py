@@ -93,8 +93,9 @@ def merge(mat, done):
                 done = True
     return mat, done
 
-def up(game):
-    print("up")
+def up(game, debug):
+    if debug:
+        print("up")
     # return matrix after shifting up
     game = transpose(game)
     game, done = cover_up(game)
@@ -103,8 +104,9 @@ def up(game):
     game = transpose(game)
     return game, done
 
-def down(game):
-    print("down")
+def down(game, debug):
+    if debug:
+        print("down")
     # return matrix after shifting down
     game = reverse(transpose(game))
     game, done = cover_up(game)
@@ -113,16 +115,18 @@ def down(game):
     game = transpose(reverse(game))
     return game, done
 
-def left(game):
-    print("left")
+def left(game, debug):
+    if debug:
+        print("left")
     # return matrix after shifting left
     game, done = cover_up(game)
     game, done = merge(game, done)
     game = cover_up(game)[0]
     return game, done
 
-def right(game):
-    print("right")
+def right(game, debug):
+    if debug:
+        print("right")
     # return matrix after shifting right
     game = reverse(game)
     game, done = cover_up(game)
@@ -159,8 +163,8 @@ class Game:
             l.extend(row)
         return l
     
-    def make_next_move(self, move: str): # move will be provided by neural net
-        self.mat, _ = Game.move_d[move](self.mat)
+    def make_next_move(self, move: str, debug = False): # move will be provided by neural net
+        self.mat, _ = Game.move_d[move](self.mat, debug)
         state = game_state(self.mat)
         return state
     
