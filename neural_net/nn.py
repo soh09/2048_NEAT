@@ -1,30 +1,24 @@
 import random
 import math
 from .LSD import LSD
+import pickle
 
 
-NEURON_ADD_CHANCE = 0.01
-SYNAPSE_WEIGHT_CHANGE_CHANCE = 0.01
-SYNAPSE_ADD_CHANCE = 0.01
+from sim.constants import NEURON_ADD_CHANCE, SYNAPSE_WEIGHT_CHANGE_CHANCE, SYNAPSE_ADD_CHANCE
 
 # Implements Neurons, Synapses, Layer, and Network
 
 # the Neuron class
 class Neuron:
     def __init__(self, id: int, bias: float = None, activation_f = None):
-        # if bias is not passed in, choose at random between 0 - 1
-        if bias is None:
-            self.bias = random.random()
-        else:
-            self.bias = bias # the bias of the neuron
+        self.id: int = id # innovation id of the neuron
+        self.bias = bias # the bias of the neuron
 
         if activation_f is None:
             self.activation_f = 'sigmoid'
         else:
             self.activation_f = activation_f
 
-        self.id: int = id # innovation id of the neuron
-        
         self.out_synapses: list[Synapse] = [] # set of synapses that are connected
 
         self.value: float = 0 # attribute to hold input value to neuron
@@ -236,67 +230,6 @@ class NetworkGenome:
 
         self.fitness = 0
 
-    @classmethod
-    def from_crossover(cls, parent1, parent2):
-        # assigns dominant to fitter Network
-        dominant, recessive = None, None
-        if isinstance(parent1, Network):
-            dominant, recessive = (parent1.genome, parent2.genome) if parent1.fitness > parent2.fitness else (parent2.genome, parent1.genome)
-        elif isinstance(parent1, NetworkGenome):
-            dominant, recessive = (parent1, parent2) if parent1.fitness > parent2.fitness else (parent2, parent1)
-
-        neuron_gene = []
-        input_l_genes = []
-        output_l_genes = []
-        synapse_gene = []
-
-        # crossover neuron_genes
-        for ng in dominant.neuron_gene:
-            if ng.id in recessive.neuron_ids: 
-                # if this NeuronGene is in the recessive NetworkGenome, do crossover
-                hybrid_neuron = NeuronGene.crossover(ng, recessive.find_neuron(ng.id))
-                neuron_gene.append(hybrid_neuron)
-            else:
-                # if this neuron is only present in the dominant, add it to the genome
-                # new_neuron = copy.deepcopy(ng)
-                new_neuron = NeuronGene(ng.id, ng.bias, ng.activation_f)
-                neuron_gene.append(new_neuron) 
-        print(neuron_gene)
-
-        # crossover input layer neurons
-        for ng in dominant.input_neurons:
-            hybrid_neuron = NeuronGene.crossover(ng, recessive.find_neuron(ng.id))
-            input_l_genes.append(hybrid_neuron)
-
-        # crossover output layer neurons
-        for ng in dominant.output_neurons:
-            hybrid_neuron = NeuronGene.crossover(ng, recessive.find_neuron(ng.id))
-            output_l_genes.append(hybrid_neuron)
-
-        # initialize child NetworkGenome so we can access various NetworkGenome attributes
-        # need child.neuron_ids attribute for the synapse crossover, because synapses must be connected
-        # for example, having access to child.neuron_ids makes crossing over synapses easier
-        child = cls(input_l_genes, output_l_genes, neuron_gene, synapse_gene, dominant, recessive)
-
-        for sg in dominant.synapse_gene:
-            if sg.id in recessive.synapse_ids:
-                # if this SynapseGene is in the recessive NetworkGenome, do crossover
-                hybrid_synapse = SynapseGene.crossover(sg, recessive.find_synapse(sg.id), child.neuron_ids)
-                child.synapse_gene.append(hybrid_synapse)
-            else:
-                # if this synapse is only present in the dominant, create new genome with same parameters, add it to the genome
-                into_id = sg.into.id
-                outof_id = sg.outof.id
-                child_into_neuron = child.find_neuron(into_id)
-                child_outof_neuron = child.find_neuron(outof_id)
-                new_synapse = SynapseGene.copy_update_synapse(sg, child_outof_neuron, child_into_neuron)
-                child.synapse_gene.append(new_synapse)
-
-        # need to manually run this to ensure child genome has synapse_gene dict
-        child.synapse_ids = {s.id: s for s in child.synapse_gene}
-
-        return child
-
     def find_neuron(self, id):
         if id in self.neuron_ids:
             return self.neuron_ids[id]
@@ -354,8 +287,9 @@ class NetworkGenome:
             # disable it
             to_disable.is_on = False
             # make a new neuron
-            new_neuron = NeuronGene(NetworkGenome.NIN, 0) # <----- need mechanism to keep track of IDs
-            print(f'[neuron addition mutation] [Neuron {NetworkGenome.NIN}] @ sg {to_disable.id}')
+            print('generating random bias')
+            new_neuron = NeuronGene(NetworkGenome.NIN, random.uniform(-1, 1)) # <----- need mechanism to keep track of IDs
+            print(f'[neuron addition mutation] [Neuron {NetworkGenome.NIN}] @ sg {to_disable.id}, bias = {new_neuron.bias}')
             NetworkGenome.NIN += 1
             self.update_neuron_lists(new_neuron)
 
@@ -422,7 +356,7 @@ class NetworkGenome:
                 
                 if allowed_neurons:
                     into_neuron = random.choice(list(allowed_neurons))
-                    new_synapse = SynapseGene(NetworkGenome.SIN, outof_neuron, into_neuron, random.uniform(0, 1), True)
+                    new_synapse = SynapseGene(NetworkGenome.SIN, outof_neuron, into_neuron, random.uniform(-1, 1), True)
                     NetworkGenome.SIN += 1
                     self.update_synapse_lists(new_synapse)
                     print(f'[synapse addition mutation] {new_synapse}')
@@ -432,7 +366,6 @@ class NetworkGenome:
                 if attempts == 0:
                     print('3 attempts were made at creating a new synapse, but failed')
                     break
-
 
     # utility function to update all the lists of NeuronGene
     def update_neuron_lists(self, new_neuron: NeuronGene):
@@ -449,9 +382,69 @@ class NetworkGenome:
 
         self.synapse_ids[new_synapse.id] = new_synapse
 
-
     @classmethod
-    def distance(cls, net1: 'NetworkGenome', net2: 'NetworkGenome', w_disjoint :float, w_excess :float, w_weight :float):
+    def from_crossover(cls, parent1, parent2):
+        # assigns dominant to fitter Network
+        dominant, recessive = None, None
+        if isinstance(parent1, Network):
+            dominant, recessive = (parent1.genome, parent2.genome) if parent1.fitness > parent2.fitness else (parent2.genome, parent1.genome)
+        elif isinstance(parent1, NetworkGenome):
+            dominant, recessive = (parent1, parent2) if parent1.fitness > parent2.fitness else (parent2, parent1)
+
+        neuron_gene = []
+        input_l_genes = []
+        output_l_genes = []
+        synapse_gene = []
+
+        # crossover neuron_genes
+        for ng in dominant.neuron_gene:
+            if ng.id in recessive.neuron_ids: 
+                # if this NeuronGene is in the recessive NetworkGenome, do crossover
+                hybrid_neuron = NeuronGene.crossover(ng, recessive.find_neuron(ng.id))
+                neuron_gene.append(hybrid_neuron)
+            else:
+                # if this neuron is only present in the dominant, add it to the genome
+                # new_neuron = copy.deepcopy(ng)
+                new_neuron = NeuronGene(ng.id, ng.bias, ng.activation_f)
+                neuron_gene.append(new_neuron) 
+        print(neuron_gene)
+
+        # crossover input layer neurons
+        for ng in dominant.input_neurons:
+            hybrid_neuron = NeuronGene.crossover(ng, recessive.find_neuron(ng.id))
+            input_l_genes.append(hybrid_neuron)
+
+        # crossover output layer neurons
+        for ng in dominant.output_neurons:
+            hybrid_neuron = NeuronGene.crossover(ng, recessive.find_neuron(ng.id))
+            output_l_genes.append(hybrid_neuron)
+
+        # initialize child NetworkGenome so we can access various NetworkGenome attributes
+        # need child.neuron_ids attribute for the synapse crossover, because synapses must be connected
+        # for example, having access to child.neuron_ids makes crossing over synapses easier
+        child = cls(input_l_genes, output_l_genes, neuron_gene, synapse_gene, dominant, recessive)
+
+        for sg in dominant.synapse_gene:
+            if sg.id in recessive.synapse_ids:
+                # if this SynapseGene is in the recessive NetworkGenome, do crossover
+                hybrid_synapse = SynapseGene.crossover(sg, recessive.find_synapse(sg.id), child.neuron_ids)
+                child.synapse_gene.append(hybrid_synapse)
+            else:
+                # if this synapse is only present in the dominant, create new genome with same parameters, add it to the genome
+                into_id = sg.into.id
+                outof_id = sg.outof.id
+                child_into_neuron = child.find_neuron(into_id)
+                child_outof_neuron = child.find_neuron(outof_id)
+                new_synapse = SynapseGene.copy_update_synapse(sg, child_outof_neuron, child_into_neuron)
+                child.synapse_gene.append(new_synapse)
+
+        # need to manually run this to ensure child genome has synapse_gene dict
+        child.synapse_ids = {s.id: s for s in child.synapse_gene}
+
+        return child
+
+    @staticmethod
+    def distance(net1: 'NetworkGenome', net2: 'NetworkGenome', w_disjoint :float, w_excess :float, w_weight :float):
         N = max(len(net1.synapse_gene), len(net2.synapse_gene))
 
         set1 = set([sg.id for sg in net1.synapse_gene])
@@ -484,6 +477,19 @@ class NetworkGenome:
         delta = disjoint * w_disjoint + excess * w_excess + w_bar * w_weight
         
         return delta
+    
+    @staticmethod
+    def save_genome(genome: 'NetworkGenome', fp: str):
+        with open(fp, 'wb') as file:
+            pickle.dump(file, genome)
+    
+    @staticmethod
+    def load_genome(fp: str):
+        with open(fp, 'rb') as file:
+            genome = pickle.load(file)
+        return genome
+
+
 
     def __repr__(self):
         return f'Neural Network Genome with {len(self.neuron_ids)} neurons, {len(self.synapse_ids)} synapses'
