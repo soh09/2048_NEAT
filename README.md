@@ -18,10 +18,10 @@ be insightful for me.
     - [x] courtesy of github repo: https://github.com/yangshun/2048-python
     - thank you very much for your code. I will take good care of it.
 2. Integrate the 2048 game with the model
-    - [ ] enable ai model to understand the current game state
+    - [x] enable ai model to understand the current game state
         - what numbers there are, how many spaces are left open, etc
         - or just straight up the numbers of each square, since there aren't that many 
-    - [ ] enable model to control the game
+    - [x] enable model to control the game
         - simple key inputs (arrow keys most likely)
 
 ## The neural network + NEAT component
@@ -71,14 +71,14 @@ be insightful for me.
         - probabilities for sexual reproduction, asexual reproduction, etc
 
 3. Simulation of Generations and Populations
-    - [ ] create Sandbox class, which takes in a Network class, instantiates a Game object, and makes it play till game over/win condition is met
+    - [x] create Sandbox class, which takes in a Network class, instantiates a Game object, and makes it play till game over/win condition is met
 
 ### To Do
 - [ ] think about neuron and synapse cross over probabilities (dominant vs recessive)
 - [ ] add a nice visual for the structure of the classes, methods, and attributes
 - [ ] add nicer comments
 - [x] fix bug where there is duplicate synapses sometimes. figure out where it comes from
-- [ ] think about how to have a global counter variable for innovation number
+- [x] think about how to have a global counter variable for innovation number
 
 ## Some Technical Considerations
 ### Neural Network
