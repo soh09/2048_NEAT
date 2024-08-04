@@ -230,6 +230,10 @@ class NetworkGenome:
 
         self.fitness = 0
 
+        # flag that gets used in simulation stage
+        # if neural network is fittest individual, this flag will be set to False, and the network will be passed to the next generation without any mutations
+        self.mutable = True
+
     def find_neuron(self, id):
         if id in self.neuron_ids:
             return self.neuron_ids[id]
@@ -386,10 +390,7 @@ class NetworkGenome:
     def from_crossover(cls, parent1, parent2):
         # assigns dominant to fitter Network
         dominant, recessive = None, None
-        if isinstance(parent1, Network):
-            dominant, recessive = (parent1.genome, parent2.genome) if parent1.fitness > parent2.fitness else (parent2.genome, parent1.genome)
-        elif isinstance(parent1, NetworkGenome):
-            dominant, recessive = (parent1, parent2) if parent1.fitness > parent2.fitness else (parent2, parent1)
+        dominant, recessive = (parent1, parent2) if parent1.fitness > parent2.fitness else (parent2, parent1)
 
         neuron_gene = []
         input_l_genes = []

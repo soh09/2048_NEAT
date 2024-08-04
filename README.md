@@ -1,5 +1,6 @@
 # So-NEAT 
 Excuse the pun. This is a work in progress.
+Start Date: 11/22/2023
 
 # Goal of Project
 I want to create an neural network that can play the classic game 2048. I saw a
@@ -109,6 +110,7 @@ the forward pass is done properly
 |  7/13 | Implemented distance function. Started work on game code to make neural network be able to play it, called Sandbox. |
 |  7/20 | Started development of simulation. Testing with no selection logic yet, population = 1000. Random mutations every iterations. |
 |  7/21 | Updated neuron bias logic. Added pickling support to NetworkGenome. Started working on Simulation class. Added constants.py. |
+|  8/3  | Debugged speciation logic. Need to fix mutate_and_speciate(), resets dictionary prematurely. |
 
 # Attribution
 

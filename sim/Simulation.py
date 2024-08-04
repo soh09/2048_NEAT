@@ -38,12 +38,23 @@ class Simulation:
         self.species_counter = 0
         
         self.current_gen = 0
+        
+        # self.species structure
+        # self.species = {
+        #     species_num: {
+        #         'progenitor': nn.NetworkGenome,
+        #         'children': list [nn.NetworkGenome]
+        #     }
+        # }
         self.species = {}
-        self.species_count = {}
+
+        self.species_size: dict [int, int] = {}
         self.genomes: list [nn.NetworkGenome] = []
         self.sandboxes: list [Sandbox] = []
 
+        # initialize population
         for i in range(population):
+            print('~~checking new genome~~')
             genome = Simulation.create_dense_network()
             # net = nn.Network(genome)
             # self.sandboxes.append(Sandbox(net))
@@ -54,15 +65,24 @@ class Simulation:
                 self.species[self.species_counter] = {'progenitor': deepcopy(genome), 'children': []}
                 self.species_counter += 1
             else:
+                print(self.species_counter)
+                new_species = True
                 # even though the rest should be classified as the same species, well check just in case
-                for species_num in range(self.species_counter):
+                for species_num in self.species:
+                    print(f'checking {species_num}')
                     dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight)
+                    print(dist)
                     if dist < self.speciation_threshold: # if genome is the same species as species_num
+                        new_species = False
                         self.species[species_num]['children'].append(genome)
                         break
-                print('new species')
-                self.species[self.species_counter] = {'progenitor': deepcopy(genome), 'children': []}
-                self.species_counter += 1
+                if new_species:
+                    print('new species')
+                    self.species[self.species_counter] = {'progenitor': deepcopy(genome), 'children': [genome]}
+                    self.species_counter += 1
+        for species_num in self.species:
+            n = len(self.species[species_num]['children'])
+            self.species_size[species_num] = n
 
         print('1000 Sandboxes created, ready for simulation')
 
@@ -73,23 +93,33 @@ class Simulation:
         
         # mutate genomes
         for genome in self.genomes:
-            genome.mutate()
+            if genome.mutable:
+                genome.mutate()
+            else:
+                # set mutable to True for this generations, so it can be mutated in future generations
+                genome.mutable = True
+
             # then put in appropriate species
+            new_species = True
             for species_num in self.species:
+                print(f'checking {species_num}')
                 dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight)
+                print(dist)
                 if dist < self.speciation_threshold: # if genome is the same species as species_num
+                    new_species = False
                     self.species[species_num]['children'].append(genome)
                     break
-            # if code reaches here, this genome is a new species
-            print('new species')
-            self.species[self.species_counter] = {'progenitor': deepcopy(genome), 'children': []}
-            self.species_counter += 1
+            if new_species:
+                print('new species')
+                self.species[self.species_counter] = {'progenitor': deepcopy(genome), 'children': [genome]}
+                self.species_counter += 1
 
         # remove species_nums that have no more children (extinct species)
-        for species_num in self.species:
+        current_species = list(self.species.keys())
+        for species_num in current_species:
             if not self.species[species_num]['children']:
                 del self.species[species_num]
-                del self.species_count[species_num]
+                del self.species_size[species_num]
 
 
     def simulate(self):
@@ -113,7 +143,7 @@ class Simulation:
         '''
         for species_num in self.species:
             n = len(self.species[species_num]['children'])
-            self.species_count[species_num] = n
+            self.species_size[species_num] = n
             for children in self.species[species_num]['children']:
                 children.fitness /= n
 
@@ -126,31 +156,37 @@ class Simulation:
 
         species_fitness = {}
         for species_num in self.species:
-            species_fitness[species_num] = sum([g.sum() for g in self.species[species_num]['children']])
+            species_fitness[species_num] = sum([g.fitness() for g in self.species[species_num]['children']])
             self.species[species_num]['children'].sort(reversed = True, key = lambda x: x.fitness)
-            if self.species_count >= 5:
+            # fittest individual gets added to new generation without any modifications
+            if self.species_size >= 5:
+                # set mutable to False to prevent mutation in next generation
+                self.species[species_num]['children'][0].mutable = False
                 next_gen.append(self.species[species_num]['children'][0])
         
         remaining = self.pop_size - len(next_gen)
-        next_gen_pops = {}
+        species_allocation = {}
         total_fitness = sum(species_fitness.values())
 
         for species_num in self.species:
-            next_gen_pops[species_num] = int(species_fitness[species_num] / total_fitness * remaining)
+            species_allocation[species_num] = int(species_fitness[species_num] / total_fitness * remaining)
         
         # ensure next gen has correct number of individuals
-        while sum(next_gen_pops.values()) < remaining:
-            next_gen_pops[random.choice(next_gen_pops.keys())] += 1
+        while sum(species_allocation.values()) < remaining:
+            species_allocation[random.choice(species_allocation.keys())] += 1
 
-        for species in next_gen_pops:
-            for _ in range(next_gen_pops[species]):
-                # create an offspring by crossing over within this species
-                # use roulette wheel selection
-
-
-
-        # if a population has more than 5 individuals, the champion is included in the next generation unperturbed
-        
+        for species_num in species_allocation:
+            # create an offspring by crossing over within this species
+            # use ~~roulette wheel selection~~ rank based
+            species_n = self.species_size[species_num]
+            proportional_prob = [rank / species_n for rank in range(species_n, 1)]
+            for _ in range(species_allocation[species_num]):
+                parent1, parent2 = random.choices(self.species[species_num]['children'], proportional_prob, k = 2)
+                offspring = nn.NetworkGenome.from_crossover(parent1, parent2)
+                next_gen.append(offspring)
+        # update self.genomes + clear self.sandboxes
+        self.genomes = next_gen
+        self.sandboxes = []
 
     @staticmethod
     def create_dense_network(input_count=16, output_count=4):
