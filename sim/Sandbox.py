@@ -37,13 +37,16 @@ class Sandbox:
         if self.game.get_board() == self.previous_state:
             max_n = self.game.get_max_item()
             self.network.set_fitness(max_n)
+            # print(self.game)
             raise GameStuckException(f'Game stuck at score {max_n}')
         if new_game_state == 'lose':
             max_n = self.game.get_max_item()
             self.network.set_fitness(max_n)
+            # print(self.game)
             raise GameLostException(f'Game lost at score {max_n}')
         elif new_game_state == 'win':
             self.network.set_fitness(2048)
+            # print(self.game)
             raise GameWonException('Game won')
 
 

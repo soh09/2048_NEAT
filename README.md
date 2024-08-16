@@ -111,6 +111,8 @@ the forward pass is done properly
 |  7/20 | Started development of simulation. Testing with no selection logic yet, population = 1000. Random mutations every iterations. |
 |  7/21 | Updated neuron bias logic. Added pickling support to NetworkGenome. Started working on Simulation class. Added constants.py. |
 |  8/3  | Debugged speciation logic. Need to fix mutate_and_speciate(), resets dictionary prematurely. |
+|  8/5  | Debugged Simulation.py. Started testing simulation, seems to be working, might need to implement multithreading for simulation to speed things up |
+|  8/15 | My worst fear has been confirmed. Multiprocessing requires me to rethink a lot of my code, as when you pass in an object to a function to be multiprocessed, it creates a COPY of the object, it doesn't use the actual object ;-; |
 
 # Attribution
 

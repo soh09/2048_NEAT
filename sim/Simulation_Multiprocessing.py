@@ -4,7 +4,7 @@ import random
 from math import e
 from copy import deepcopy
 from constants import POP_SIZE, SPECIATION_THRESHOLD, W_DISJOINT, W_EXCESS, W_WEIGHT
-
+import multiprocessing as mp
 
 
 class Simulation:
@@ -126,25 +126,29 @@ class Simulation:
             if not self.species[species_num]['children']:
                 del self.species[species_num]
                 del self.species_size[species_num]
-
-
-    def simulate(self):
-        self.sandboxes = [Sandbox(nn.Network(genome)) for genome in self.genomes]
-        max_fitness = 0
-        avg_fitness = 0
-        for _, sandbox in enumerate(self.sandboxes):
+    
+    # make this static because it makes the multiprocessing simpler (don't need pass in self, just genome)
+    @staticmethod
+    def simulate_single_sandbox(sandbox):
             while True:
                 try: # try to continue playing the game 
                     sandbox.set_input()
                     sandbox.make_next_move()
                     sandbox.reset_update()
                 except Exception as e:
-                    avg_fitness += sandbox.network.fitness
-                    if max_fitness < sandbox.network.fitness:
-                        max_fitness = sandbox.network.fitness
-                    # print(e)
-                    # print(f'Sandbox {i} finished with score of {sandbox.network.fitness}')
-                    break # once a game has won, lost, or gotten stuck, break While loop, move onto new sandbox
+                    return sandbox.network.fitness
+
+    def simulate(self):
+        self.sandboxes = [Sandbox(nn.Network(genome)) for genome in self.genomes]
+        with mp.Pool(processes=mp.cpu_count()) as pool:
+            fitness_scores = pool.map(self.simulate_single_sandbox, self.sandboxes)
+
+        for sb, fitness in zip(self.sandboxes, fitness_scores):
+            sb.network.fitness = fitness
+
+        max_fitness = max(fitness_scores)
+        avg_fitness = sum(fitness_scores) / len(fitness_scores)
+
         print(f'(max, avg) unadjusted fitness of generation {self.current_gen} = {(max_fitness, avg_fitness / 1000)}')
         self.current_gen += 1
 

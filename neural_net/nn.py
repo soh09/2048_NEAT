@@ -230,6 +230,9 @@ class NetworkGenome:
 
         self.fitness = 0
 
+        # will be used to mark species #
+        self.species = None
+
         # flag that gets used in simulation stage
         # if neural network is fittest individual, this flag will be set to False, and the network will be passed to the next generation without any mutations
         self.mutable = True
@@ -270,6 +273,7 @@ class NetworkGenome:
         return sorted_neurons
      
     def mutate(self):
+        # print('mutating')
         # synapse weight change
         for sg in self.synapse_gene:
             synapse_weight_change = random.random() <= SYNAPSE_WEIGHT_CHANGE_CHANCE
@@ -278,7 +282,7 @@ class NetworkGenome:
             #     sg.is_on = not sg.is_on
             if synapse_weight_change:
                 new_weight = random.uniform(0, 1)
-                print(f'[synapse weight change mutation] @ sg {sg.id} ({sg.weight:.2f} -> {new_weight:.2f})')
+                # print(f'[synapse weight change mutation] @ sg {sg.id} ({sg.weight:.2f} -> {new_weight:.2f})')
                 sg.weight = new_weight
 
         # neuron add
@@ -291,15 +295,15 @@ class NetworkGenome:
             # disable it
             to_disable.is_on = False
             # make a new neuron
-            print('generating random bias')
+            # print('generating random bias')
             new_neuron = NeuronGene(NetworkGenome.NIN, random.uniform(-1, 1)) # <----- need mechanism to keep track of IDs
-            print(f'[neuron addition mutation] [Neuron {NetworkGenome.NIN}] @ sg {to_disable.id}, bias = {new_neuron.bias}')
+            # print(f'[neuron addition mutation] [Neuron {NetworkGenome.NIN}] @ sg {to_disable.id}, bias = {new_neuron.bias}')
             NetworkGenome.NIN += 1
             self.update_neuron_lists(new_neuron)
 
             # create two new synapses, and connect the new neuron with it
-            print(f'to_disable.outof: {to_disable.outof}')
-            print(f'to_disable.into: {to_disable.into}')
+            # print(f'to_disable.outof: {to_disable.outof}')
+            # print(f'to_disable.into: {to_disable.into}')
             new_synapse_into = SynapseGene(NetworkGenome.SIN, to_disable.outof, new_neuron, 1, True)
             NetworkGenome.SIN += 1
             new_synapse_outof = SynapseGene(NetworkGenome.SIN, new_neuron, to_disable.into, to_disable.weight, True)
@@ -363,12 +367,12 @@ class NetworkGenome:
                     new_synapse = SynapseGene(NetworkGenome.SIN, outof_neuron, into_neuron, random.uniform(-1, 1), True)
                     NetworkGenome.SIN += 1
                     self.update_synapse_lists(new_synapse)
-                    print(f'[synapse addition mutation] {new_synapse}')
+                    # print(f'[synapse addition mutation] {new_synapse}')
                     break
                 
                 attempts -= 1
                 if attempts == 0:
-                    print('3 attempts were made at creating a new synapse, but failed')
+                    # print('3 attempts were made at creating a new synapse, but failed')
                     break
 
     # utility function to update all the lists of NeuronGene
@@ -392,6 +396,8 @@ class NetworkGenome:
         dominant, recessive = None, None
         dominant, recessive = (parent1, parent2) if parent1.fitness > parent2.fitness else (parent2, parent1)
 
+        # print(f'{parent1, parent1.fitness, parent2, parent2.fitness}')
+
         neuron_gene = []
         input_l_genes = []
         output_l_genes = []
@@ -408,7 +414,7 @@ class NetworkGenome:
                 # new_neuron = copy.deepcopy(ng)
                 new_neuron = NeuronGene(ng.id, ng.bias, ng.activation_f)
                 neuron_gene.append(new_neuron) 
-        print(neuron_gene)
+        # print(neuron_gene)
 
         # crossover input layer neurons
         for ng in dominant.input_neurons:
