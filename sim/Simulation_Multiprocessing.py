@@ -5,6 +5,7 @@ from math import e
 from copy import deepcopy
 from constants import POP_SIZE, SPECIATION_THRESHOLD, W_DISJOINT, W_EXCESS, W_WEIGHT
 import multiprocessing as mp
+import time
 
 
 class Simulation:
@@ -55,7 +56,7 @@ class Simulation:
 
         # initialize population
         for i in range(population):
-            print('~~checking new genome~~')
+            # print('~~checking new genome~~')
             genome = Simulation.create_dense_network()
             # net = nn.Network(genome)
             self.genomes.append(genome)
@@ -67,20 +68,20 @@ class Simulation:
                 genome.species = 0
                 self.species_counter += 1
             else:
-                print(self.species_counter)
+                # print(self.species_counter)
                 new_species = True
                 # even though the rest should be classified as the same species, well check just in case
                 for species_num in self.species:
-                    print(f'checking {species_num}')
-                    dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight)
-                    print(dist)
+                    # print(f'checking {species_num}')
+                    dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight, self.speciation_threshold)
+                    # print(dist)
                     if dist < self.speciation_threshold: # if genome is the same species as species_num
                         new_species = False
                         self.species[species_num]['children'].append(genome)
                         genome.species = species_num
                         break
                 if new_species:
-                    print('new species')
+                    # print('new species')
                     self.species[self.species_counter] = {'progenitor': deepcopy(genome), 'children': [genome]}
                     genome.species = species_num
                     self.species_counter += 1
@@ -90,10 +91,13 @@ class Simulation:
 
         print('1000 NetworkGenomes created, ready for simulation')
 
+    # @profile
     def mutate_and_speciate(self):
         # reset self.species
         for species_num in self.species:
             self.species[species_num]['children'] = []
+
+        now = 0
         
         # mutate genomes
         for genome in self.genomes:
@@ -103,22 +107,30 @@ class Simulation:
                 # set mutable to True for this generations, so it can be mutated in future generations
                 genome.mutable = True
 
+
             # then put in appropriate species
             new_species = True
             for species_num in self.species:
                 # print(f'checking {species_num}')
-                dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight)
+                # start = time.time()
+                dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight, self.speciation_threshold)
+
                 # print(dist)
                 if dist < self.speciation_threshold: # if genome is the same species as species_num
                     new_species = False
                     self.species[species_num]['children'].append(genome)
                     genome.species = species_num
                     break
+                # now += time.time() - start
+
             if new_species:
                 # print('new species')
                 self.species[self.species_counter] = {'progenitor': deepcopy(genome), 'children': [genome]}
                 genome.species = species_num
                 self.species_counter += 1
+
+        
+        # print(f'mutate: {now:.2f}')
 
         # remove species_nums that have no more children (extinct species)
         current_species = list(self.species.keys())
@@ -137,19 +149,26 @@ class Simulation:
                     sandbox.reset_update()
                 except Exception as e:
                     return sandbox.network.fitness
-
+    # @profile
     def simulate(self):
         self.sandboxes = [Sandbox(nn.Network(genome)) for genome in self.genomes]
+
+        # multiprocessing
         with mp.Pool(processes=mp.cpu_count()) as pool:
             fitness_scores = pool.map(self.simulate_single_sandbox, self.sandboxes)
 
         for sb, fitness in zip(self.sandboxes, fitness_scores):
-            sb.network.fitness = fitness
+            sb.network.set_fitness(fitness)
 
         max_fitness = max(fitness_scores)
         avg_fitness = sum(fitness_scores) / len(fitness_scores)
 
-        print(f'(max, avg) unadjusted fitness of generation {self.current_gen} = {(max_fitness, avg_fitness / 1000)}')
+        for genome in self.genomes:
+            if genome.fitness == max_fitness:
+                nn.NetworkGenome.save_genome(genome, '/Users/so/Documents/projects/personal/2048_AI/sim/best_network')
+
+        print(f'(max, avg) unadjusted fitness of generation {self.current_gen} = {(max_fitness, avg_fitness)}')
+        print(f'number of species: {len(self.species)}')
         self.current_gen += 1
 
     def adjust_fitness(self):

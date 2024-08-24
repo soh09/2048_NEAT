@@ -30,7 +30,7 @@ class Sandbox:
         max_neuron_idx = max(range(self.network.output_l.n_neurons), key=lambda i: self.network.output_l.neurons[i].get_activation())
         move = Sandbox.neuron_to_move[max_neuron_idx]
 
-        new_game_state = self.game.make_next_move(move, self.debug)
+        new_game_state = self.game.do_next_move(move, self.debug)
         if self.debug:
             print(self.game)
 

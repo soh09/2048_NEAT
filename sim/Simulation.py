@@ -55,7 +55,7 @@ class Simulation:
 
         # initialize population
         for i in range(population):
-            print('~~checking new genome~~')
+            # print('~~checking new genome~~')
             genome = Simulation.create_dense_network()
             # net = nn.Network(genome)
             self.genomes.append(genome)
@@ -67,20 +67,20 @@ class Simulation:
                 genome.species = 0
                 self.species_counter += 1
             else:
-                print(self.species_counter)
+                # print(self.species_counter)
                 new_species = True
                 # even though the rest should be classified as the same species, well check just in case
                 for species_num in self.species:
-                    print(f'checking {species_num}')
-                    dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight)
-                    print(dist)
+                    # print(f'checking {species_num}')
+                    dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight, self.speciation_threshold)
+                    # print(dist)
                     if dist < self.speciation_threshold: # if genome is the same species as species_num
                         new_species = False
                         self.species[species_num]['children'].append(genome)
                         genome.species = species_num
                         break
                 if new_species:
-                    print('new species')
+                    # print('new species')
                     self.species[self.species_counter] = {'progenitor': deepcopy(genome), 'children': [genome]}
                     genome.species = species_num
                     self.species_counter += 1
@@ -90,6 +90,7 @@ class Simulation:
 
         print('1000 NetworkGenomes created, ready for simulation')
 
+    # @profile
     def mutate_and_speciate(self):
         # reset self.species
         for species_num in self.species:
@@ -107,7 +108,7 @@ class Simulation:
             new_species = True
             for species_num in self.species:
                 # print(f'checking {species_num}')
-                dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight)
+                dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight, self.speciation_threshold)
                 # print(dist)
                 if dist < self.speciation_threshold: # if genome is the same species as species_num
                     new_species = False
@@ -127,7 +128,7 @@ class Simulation:
                 del self.species[species_num]
                 del self.species_size[species_num]
 
-
+    # @profile
     def simulate(self):
         self.sandboxes = [Sandbox(nn.Network(genome)) for genome in self.genomes]
         max_fitness = 0
