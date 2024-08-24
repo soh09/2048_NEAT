@@ -1,0 +1,425 @@
+(max, avg) unadjusted fitness of generation 0 = (32, 5.498)
+(max, avg) unadjusted fitness of generation 1 = (32, 5.644)
+mutate: 0.030, simulate: 0.666
+(max, avg) unadjusted fitness of generation 2 = (32, 6.426)
+mutate: 0.122, simulate: 0.550
+(max, avg) unadjusted fitness of generation 3 = (32, 5.786)
+mutate: 0.195, simulate: 0.593
+(max, avg) unadjusted fitness of generation 4 = (64, 5.522)
+mutate: 0.290, simulate: 0.796
+(max, avg) unadjusted fitness of generation 5 = (32, 5.762)
+mutate: 0.720, simulate: 0.979
+(max, avg) unadjusted fitness of generation 6 = (32, 5.812)
+mutate: 0.457, simulate: 1.285
+(max, avg) unadjusted fitness of generation 7 = (32, 5.93)
+mutate: 0.605, simulate: 1.470
+(max, avg) unadjusted fitness of generation 8 = (32, 5.928)
+mutate: 0.609, simulate: 1.773
+(max, avg) unadjusted fitness of generation 9 = (32, 5.794)
+mutate: 1.592, simulate: 1.711
+(max, avg) unadjusted fitness of generation 10 = (32, 5.932)
+mutate: 0.852, simulate: 1.959
+(max, avg) unadjusted fitness of generation 11 = (32, 5.986)
+mutate: 1.958, simulate: 2.246
+(max, avg) unadjusted fitness of generation 12 = (32, 5.964)
+mutate: 2.092, simulate: 2.691
+(max, avg) unadjusted fitness of generation 13 = (64, 6.2)
+mutate: 2.843, simulate: 2.981
+(max, avg) unadjusted fitness of generation 14 = (32, 6.014)
+mutate: 1.292, simulate: 4.988
+(max, avg) unadjusted fitness of generation 15 = (32, 6.062)
+mutate: 2.194, simulate: 3.961
+(max, avg) unadjusted fitness of generation 16 = (32, 6.452)
+mutate: 1.545, simulate: 4.449
+(max, avg) unadjusted fitness of generation 17 = (32, 6.168)
+mutate: 1.559, simulate: 4.570
+(max, avg) unadjusted fitness of generation 18 = (32, 6.266)
+mutate: 1.759, simulate: 5.519
+(max, avg) unadjusted fitness of generation 19 = (32, 6.31)
+mutate: 2.064, simulate: 5.659
+(max, avg) unadjusted fitness of generation 20 = (32, 6.08)
+mutate: 4.072, simulate: 6.051
+(max, avg) unadjusted fitness of generation 21 = (32, 6.408)
+mutate: 2.762, simulate: 6.040
+(max, avg) unadjusted fitness of generation 22 = (32, 6.518)
+mutate: 4.625, simulate: 7.121
+(max, avg) unadjusted fitness of generation 23 = (32, 6.282)
+mutate: 2.743, simulate: 6.776
+(max, avg) unadjusted fitness of generation 24 = (64, 6.452)
+mutate: 5.628, simulate: 7.223
+(max, avg) unadjusted fitness of generation 25 = (32, 6.202)
+mutate: 2.741, simulate: 8.033
+(max, avg) unadjusted fitness of generation 26 = (32, 6.48)
+mutate: 2.344, simulate: 8.311
+(max, avg) unadjusted fitness of generation 27 = (32, 6.614)
+mutate: 6.540, simulate: 8.315
+(max, avg) unadjusted fitness of generation 28 = (32, 6.506)
+mutate: 4.031, simulate: 9.439
+(max, avg) unadjusted fitness of generation 29 = (32, 6.466)
+mutate: 7.940, simulate: 10.885
+(max, avg) unadjusted fitness of generation 30 = (32, 6.374)
+mutate: 3.616, simulate: 9.972
+(max, avg) unadjusted fitness of generation 31 = (32, 6.464)
+mutate: 8.938, simulate: 10.443
+(max, avg) unadjusted fitness of generation 32 = (64, 6.634)
+mutate: 3.055, simulate: 10.333
+(max, avg) unadjusted fitness of generation 33 = (64, 6.572)
+mutate: 3.242, simulate: 10.708
+(max, avg) unadjusted fitness of generation 34 = (32, 6.494)
+mutate: 3.719, simulate: 10.802
+(max, avg) unadjusted fitness of generation 35 = (64, 6.736)
+mutate: 9.710, simulate: 10.729
+(max, avg) unadjusted fitness of generation 36 = (32, 6.522)
+mutate: 3.762, simulate: 11.390
+(max, avg) unadjusted fitness of generation 37 = (32, 6.792)
+mutate: 3.988, simulate: 12.372
+(max, avg) unadjusted fitness of generation 38 = (32, 6.688)
+mutate: 3.677, simulate: 12.657
+(max, avg) unadjusted fitness of generation 39 = (32, 7.148)
+mutate: 12.056, simulate: 11.574
+(max, avg) unadjusted fitness of generation 40 = (64, 6.68)
+mutate: 4.435, simulate: 12.639
+(max, avg) unadjusted fitness of generation 41 = (32, 6.638)
+mutate: 4.685, simulate: 13.056
+(max, avg) unadjusted fitness of generation 42 = (64, 6.588)
+mutate: 4.659, simulate: 13.648
+(max, avg) unadjusted fitness of generation 43 = (32, 6.35)
+mutate: 5.914, simulate: 15.338
+(max, avg) unadjusted fitness of generation 44 = (32, 6.714)
+mutate: 5.051, simulate: 13.511
+(max, avg) unadjusted fitness of generation 45 = (32, 6.42)
+mutate: 13.259, simulate: 16.099
+(max, avg) unadjusted fitness of generation 46 = (64, 6.872)
+mutate: 4.422, simulate: 16.005
+(max, avg) unadjusted fitness of generation 47 = (64, 6.67)
+mutate: 5.732, simulate: 14.200
+(max, avg) unadjusted fitness of generation 48 = (32, 6.778)
+mutate: 5.478, simulate: 15.596
+(max, avg) unadjusted fitness of generation 49 = (32, 6.944)
+mutate: 14.650, simulate: 15.319
+(max, avg) unadjusted fitness of generation 50 = (64, 7.278)
+mutate: 4.784, simulate: 15.494
+(max, avg) unadjusted fitness of generation 51 = (64, 6.93)
+mutate: 5.411, simulate: 16.461
+(max, avg) unadjusted fitness of generation 52 = (64, 7.132)
+mutate: 5.269, simulate: 16.188
+(max, avg) unadjusted fitness of generation 53 = (64, 7.136)
+mutate: 16.026, simulate: 17.008
+(max, avg) unadjusted fitness of generation 54 = (64, 7.088)
+mutate: 4.122, simulate: 16.885
+(max, avg) unadjusted fitness of generation 55 = (32, 7.316)
+mutate: 4.531, simulate: 16.740
+(max, avg) unadjusted fitness of generation 56 = (64, 6.988)
+mutate: 5.440, simulate: 16.997
+(max, avg) unadjusted fitness of generation 57 = (64, 7.04)
+mutate: 4.535, simulate: 17.780
+(max, avg) unadjusted fitness of generation 58 = (32, 6.868)
+mutate: 17.951, simulate: 18.457
+(max, avg) unadjusted fitness of generation 59 = (32, 7.294)
+mutate: 5.562, simulate: 19.654
+(max, avg) unadjusted fitness of generation 60 = (32, 6.704)
+mutate: 7.106, simulate: 19.211
+(max, avg) unadjusted fitness of generation 61 = (32, 6.854)
+mutate: 5.626, simulate: 20.431
+(max, avg) unadjusted fitness of generation 62 = (32, 7.036)
+mutate: 5.248, simulate: 21.798
+(max, avg) unadjusted fitness of generation 63 = (32, 7.034)
+mutate: 4.472, simulate: 21.580
+(max, avg) unadjusted fitness of generation 64 = (32, 6.926)
+mutate: 6.645, simulate: 21.952
+(max, avg) unadjusted fitness of generation 65 = (32, 7.026)
+mutate: 5.652, simulate: 19.716
+(max, avg) unadjusted fitness of generation 66 = (64, 7.128)
+mutate: 19.217, simulate: 19.736
+(max, avg) unadjusted fitness of generation 67 = (32, 6.942)
+mutate: 5.195, simulate: 20.249
+(max, avg) unadjusted fitness of generation 68 = (32, 7.096)
+mutate: 6.827, simulate: 20.920
+(max, avg) unadjusted fitness of generation 69 = (64, 7.318)
+mutate: 6.880, simulate: 21.156
+(max, avg) unadjusted fitness of generation 70 = (64, 7.472)
+mutate: 20.657, simulate: 22.186
+(max, avg) unadjusted fitness of generation 71 = (64, 7.36)
+mutate: 6.465, simulate: 21.804
+(max, avg) unadjusted fitness of generation 72 = (64, 7.442)
+mutate: 6.208, simulate: 22.740
+(max, avg) unadjusted fitness of generation 73 = (64, 7.364)
+mutate: 6.000, simulate: 23.042
+(max, avg) unadjusted fitness of generation 74 = (32, 7.012)
+mutate: 23.319, simulate: 23.545
+(max, avg) unadjusted fitness of generation 75 = (64, 7.076)
+mutate: 5.614, simulate: 22.782
+(max, avg) unadjusted fitness of generation 76 = (32, 7.174)
+mutate: 5.967, simulate: 23.036
+(max, avg) unadjusted fitness of generation 77 = (64, 7.61)
+mutate: 6.857, simulate: 23.699
+(max, avg) unadjusted fitness of generation 78 = (64, 7.544)
+mutate: 4.767, simulate: 24.766
+(max, avg) unadjusted fitness of generation 79 = (64, 7.454)
+mutate: 5.986, simulate: 24.234
+(max, avg) unadjusted fitness of generation 80 = (64, 7.538)
+mutate: 7.301, simulate: 23.697
+(max, avg) unadjusted fitness of generation 81 = (64, 7.544)
+mutate: 6.848, simulate: 24.485
+(max, avg) unadjusted fitness of generation 82 = (64, 7.788)
+mutate: 5.382, simulate: 24.671
+(max, avg) unadjusted fitness of generation 83 = (64, 7.224)
+mutate: 6.364, simulate: 24.848
+(max, avg) unadjusted fitness of generation 84 = (64, 7.476)
+mutate: 26.404, simulate: 24.975
+(max, avg) unadjusted fitness of generation 85 = (64, 7.78)
+mutate: 6.452, simulate: 25.269
+(max, avg) unadjusted fitness of generation 86 = (32, 7.406)
+mutate: 6.716, simulate: 25.690
+(max, avg) unadjusted fitness of generation 87 = (32, 7.488)
+mutate: 4.450, simulate: 26.434
+(max, avg) unadjusted fitness of generation 88 = (64, 7.896)
+mutate: 6.227, simulate: 26.825
+(max, avg) unadjusted fitness of generation 89 = (64, 7.618)
+mutate: 27.231, simulate: 26.737
+(max, avg) unadjusted fitness of generation 90 = (64, 7.964)
+mutate: 6.677, simulate: 28.082
+(max, avg) unadjusted fitness of generation 91 = (64, 8.096)
+mutate: 5.694, simulate: 26.571
+(max, avg) unadjusted fitness of generation 92 = (64, 8.064)
+mutate: 6.344, simulate: 28.332
+(max, avg) unadjusted fitness of generation 93 = (64, 7.982)
+mutate: 5.575, simulate: 26.100
+(max, avg) unadjusted fitness of generation 94 = (64, 8.12)
+mutate: 6.714, simulate: 54.508
+(max, avg) unadjusted fitness of generation 95 = (64, 7.892)
+mutate: 5.858, simulate: 28.680
+(max, avg) unadjusted fitness of generation 96 = (64, 8.116)
+mutate: 7.136, simulate: 28.671
+(max, avg) unadjusted fitness of generation 97 = (64, 8.33)
+mutate: 7.486, simulate: 29.257
+(max, avg) unadjusted fitness of generation 98 = (64, 8.474)
+mutate: 7.029, simulate: 28.678
+(max, avg) unadjusted fitness of generation 99 = (64, 8.37)
+mutate: 30.133, simulate: 29.929
+(max, avg) unadjusted fitness of generation 100 = (64, 8.264)
+mutate: 7.829, simulate: 28.867
+(max, avg) unadjusted fitness of generation 101 = (64, 8.444)
+mutate: 7.928, simulate: 30.097
+(max, avg) unadjusted fitness of generation 102 = (64, 8.718)
+mutate: 6.690, simulate: 31.111
+(max, avg) unadjusted fitness of generation 103 = (128, 8.718)
+mutate: 7.433, simulate: 30.434
+(max, avg) unadjusted fitness of generation 104 = (64, 8.592)
+mutate: 35.458, simulate: 32.695
+(max, avg) unadjusted fitness of generation 105 = (64, 8.142)
+mutate: 6.598, simulate: 30.854
+(max, avg) unadjusted fitness of generation 106 = (64, 8.328)
+mutate: 5.507, simulate: 30.069
+(max, avg) unadjusted fitness of generation 107 = (128, 8.432)
+mutate: 8.039, simulate: 30.670
+(max, avg) unadjusted fitness of generation 108 = (64, 9.162)
+mutate: 6.177, simulate: 33.195
+(max, avg) unadjusted fitness of generation 109 = (64, 8.832)
+mutate: 35.350, simulate: 33.832
+(max, avg) unadjusted fitness of generation 110 = (64, 8.466)
+mutate: 8.949, simulate: 32.439
+(max, avg) unadjusted fitness of generation 111 = (64, 8.198)
+mutate: 8.550, simulate: 34.244
+(max, avg) unadjusted fitness of generation 112 = (64, 8.594)
+mutate: 6.994, simulate: 33.974
+(max, avg) unadjusted fitness of generation 113 = (64, 8.458)
+mutate: 34.443, simulate: 34.725
+(max, avg) unadjusted fitness of generation 114 = (64, 8.466)
+mutate: 7.683, simulate: 33.239
+(max, avg) unadjusted fitness of generation 115 = (64, 8.664)
+mutate: 6.071, simulate: 32.964
+(max, avg) unadjusted fitness of generation 116 = (64, 8.624)
+mutate: 9.980, simulate: 35.405
+(max, avg) unadjusted fitness of generation 117 = (64, 8.606)
+mutate: 7.710, simulate: 38.358
+(max, avg) unadjusted fitness of generation 118 = (64, 8.942)
+mutate: 38.959, simulate: 38.296
+(max, avg) unadjusted fitness of generation 119 = (64, 8.956)
+mutate: 7.721, simulate: 36.899
+(max, avg) unadjusted fitness of generation 120 = (64, 9.194)
+mutate: 7.594, simulate: 37.335
+(max, avg) unadjusted fitness of generation 121 = (64, 8.542)
+mutate: 7.577, simulate: 37.270
+(max, avg) unadjusted fitness of generation 122 = (64, 8.762)
+mutate: 8.512, simulate: 37.754
+(max, avg) unadjusted fitness of generation 123 = (128, 8.602)
+mutate: 46.760, simulate: 38.283
+(max, avg) unadjusted fitness of generation 124 = (64, 8.682)
+mutate: 9.134, simulate: 39.937
+(max, avg) unadjusted fitness of generation 125 = (128, 8.918)
+mutate: 7.321, simulate: 36.853
+(max, avg) unadjusted fitness of generation 126 = (64, 8.874)
+mutate: 8.201, simulate: 40.368
+(max, avg) unadjusted fitness of generation 127 = (64, 8.794)
+mutate: 6.011, simulate: 38.866
+(max, avg) unadjusted fitness of generation 128 = (64, 8.696)
+mutate: 45.043, simulate: 40.910
+(max, avg) unadjusted fitness of generation 129 = (64, 9.524)
+mutate: 8.549, simulate: 42.593
+(max, avg) unadjusted fitness of generation 130 = (64, 9.482)
+mutate: 10.797, simulate: 42.502
+(max, avg) unadjusted fitness of generation 131 = (64, 10.206)
+mutate: 9.790, simulate: 42.565
+(max, avg) unadjusted fitness of generation 132 = (64, 9.984)
+mutate: 47.983, simulate: 45.120
+(max, avg) unadjusted fitness of generation 133 = (128, 9.656)
+mutate: 8.583, simulate: 42.175
+(max, avg) unadjusted fitness of generation 134 = (64, 9.322)
+mutate: 10.304, simulate: 41.914
+(max, avg) unadjusted fitness of generation 135 = (128, 9.292)
+mutate: 8.805, simulate: 40.567
+(max, avg) unadjusted fitness of generation 136 = (64, 9.998)
+mutate: 9.828, simulate: 91.385
+(max, avg) unadjusted fitness of generation 137 = (64, 10.334)
+mutate: 8.884, simulate: 43.172
+(max, avg) unadjusted fitness of generation 138 = (128, 10.534)
+mutate: 6.184, simulate: 48.049
+(max, avg) unadjusted fitness of generation 139 = (64, 10.322)
+mutate: 6.657, simulate: 42.793
+(max, avg) unadjusted fitness of generation 140 = (128, 10.138)
+mutate: 7.707, simulate: 44.472
+(max, avg) unadjusted fitness of generation 141 = (128, 9.818)
+mutate: 7.356, simulate: 45.259
+(max, avg) unadjusted fitness of generation 142 = (128, 10.2)
+mutate: 9.606, simulate: 44.086
+(max, avg) unadjusted fitness of generation 143 = (128, 10.458)
+mutate: 65.930, simulate: 49.937
+(max, avg) unadjusted fitness of generation 144 = (128, 10.554)
+mutate: 11.887, simulate: 47.315
+(max, avg) unadjusted fitness of generation 145 = (128, 10.498)
+mutate: 11.264, simulate: 47.038
+(max, avg) unadjusted fitness of generation 146 = (128, 10.622)
+mutate: 9.876, simulate: 45.196
+(max, avg) unadjusted fitness of generation 147 = (128, 10.638)
+mutate: 72.357, simulate: 55.943
+(max, avg) unadjusted fitness of generation 148 = (128, 10.532)
+mutate: 9.186, simulate: 50.744
+(max, avg) unadjusted fitness of generation 149 = (128, 10.586)
+mutate: 13.841, simulate: 50.851
+(max, avg) unadjusted fitness of generation 150 = (128, 11.22)
+mutate: 75.431, simulate: 55.324
+(max, avg) unadjusted fitness of generation 151 = (128, 11.078)
+mutate: 7.191, simulate: 53.463
+(max, avg) unadjusted fitness of generation 152 = (128, 11.862)
+mutate: 9.351, simulate: 53.709
+(max, avg) unadjusted fitness of generation 153 = (128, 11.074)
+mutate: 13.978, simulate: 51.661
+(max, avg) unadjusted fitness of generation 154 = (128, 10.868)
+mutate: 11.461, simulate: 53.780
+(max, avg) unadjusted fitness of generation 155 = (64, 11.238)
+mutate: 8.700, simulate: 157.663
+(max, avg) unadjusted fitness of generation 156 = (128, 10.662)
+mutate: 10.798, simulate: 50.417
+(max, avg) unadjusted fitness of generation 157 = (128, 10.388)
+mutate: 11.270, simulate: 53.453
+(max, avg) unadjusted fitness of generation 158 = (128, 10.814)
+mutate: 9.791, simulate: 56.085
+(max, avg) unadjusted fitness of generation 159 = (128, 10.634)
+mutate: 9.329, simulate: 53.291
+(max, avg) unadjusted fitness of generation 160 = (128, 10.774)
+mutate: 108.262, simulate: 59.476
+(max, avg) unadjusted fitness of generation 161 = (128, 11.456)
+mutate: 10.723, simulate: 56.438
+(max, avg) unadjusted fitness of generation 162 = (128, 11.446)
+mutate: 12.747, simulate: 54.565
+(max, avg) unadjusted fitness of generation 163 = (128, 11.706)
+mutate: 12.687, simulate: 58.135
+(max, avg) unadjusted fitness of generation 164 = (128, 11.428)
+mutate: 6.404, simulate: 56.325
+(max, avg) unadjusted fitness of generation 165 = (128, 11.436)
+mutate: 123.917, simulate: 62.710
+(max, avg) unadjusted fitness of generation 166 = (128, 11.35)
+mutate: 10.155, simulate: 57.567
+(max, avg) unadjusted fitness of generation 167 = (64, 10.93)
+mutate: 13.543, simulate: 57.862
+(max, avg) unadjusted fitness of generation 168 = (128, 10.728)
+mutate: 11.481, simulate: 61.104
+(max, avg) unadjusted fitness of generation 169 = (128, 10.42)
+mutate: 12.764, simulate: 319.906
+(max, avg) unadjusted fitness of generation 170 = (128, 10.656)
+mutate: 15.271, simulate: 57.626
+(max, avg) unadjusted fitness of generation 171 = (128, 11.338)
+mutate: 11.348, simulate: 67.620
+(max, avg) unadjusted fitness of generation 172 = (256, 11.28)
+mutate: 13.568, simulate: 66.979
+(max, avg) unadjusted fitness of generation 173 = (128, 11.076)
+mutate: 11.876, simulate: 58.990
+(max, avg) unadjusted fitness of generation 174 = (128, 11.254)
+mutate: 213.893, simulate: 70.924
+(max, avg) unadjusted fitness of generation 175 = (128, 11.264)
+mutate: 17.783, simulate: 61.472
+(max, avg) unadjusted fitness of generation 176 = (64, 11.074)
+mutate: 12.517, simulate: 69.342
+(max, avg) unadjusted fitness of generation 177 = (64, 11.316)
+mutate: 14.858, simulate: 85.433
+(max, avg) unadjusted fitness of generation 178 = (64, 11.658)
+mutate: 307.229, simulate: 75.271
+(max, avg) unadjusted fitness of generation 179 = (128, 11.132)
+mutate: 15.317, simulate: 65.532
+(max, avg) unadjusted fitness of generation 180 = (128, 10.896)
+mutate: 15.438, simulate: 71.290
+(max, avg) unadjusted fitness of generation 181 = (64, 10.53)
+mutate: 14.548, simulate: 439.535
+(max, avg) unadjusted fitness of generation 182 = (128, 11.458)
+mutate: 22.401, simulate: 86.010
+(max, avg) unadjusted fitness of generation 183 = (128, 10.658)
+mutate: 15.377, simulate: 77.520
+(max, avg) unadjusted fitness of generation 184 = (256, 11.938)
+mutate: 15.619, simulate: 78.713
+(max, avg) unadjusted fitness of generation 185 = (128, 11.716)
+mutate: 13.494, simulate: 85.671
+(max, avg) unadjusted fitness of generation 186 = (128, 11.91)
+mutate: 420.983, simulate: 87.398
+(max, avg) unadjusted fitness of generation 187 = (128, 12.382)
+mutate: 15.825, simulate: 84.928
+(max, avg) unadjusted fitness of generation 188 = (128, 13.276)
+mutate: 20.764, simulate: 84.240
+(max, avg) unadjusted fitness of generation 189 = (128, 13.154)
+mutate: 18.056, simulate: 78.474
+(max, avg) unadjusted fitness of generation 190 = (128, 12.522)
+mutate: 13.392, simulate: 78.617
+(max, avg) unadjusted fitness of generation 191 = (128, 11.988)
+mutate: 308.853, simulate: 87.561
+(max, avg) unadjusted fitness of generation 192 = (128, 12.132)
+mutate: 16.514, simulate: 84.625
+(max, avg) unadjusted fitness of generation 193 = (128, 12.94)
+mutate: 16.878, simulate: 83.950
+(max, avg) unadjusted fitness of generation 194 = (128, 12.932)
+mutate: 16.884, simulate: 80.016
+(max, avg) unadjusted fitness of generation 195 = (128, 12.674)
+mutate: 319.893, simulate: 86.265
+(max, avg) unadjusted fitness of generation 196 = (128, 12.8)
+mutate: 20.726, simulate: 85.375
+(max, avg) unadjusted fitness of generation 197 = (128, 12.468)
+mutate: 15.014, simulate: 83.927
+(max, avg) unadjusted fitness of generation 198 = (256, 13.134)
+mutate: 15.348, simulate: 76.639
+(max, avg) unadjusted fitness of generation 199 = (128, 13.052)
+mutate: 10.558, simulate: 75.537
+(max, avg) unadjusted fitness of generation 200 = (128, 12.436)
+mutate: 361.529, simulate: 84.039
+(max, avg) unadjusted fitness of generation 201 = (256, 13.788)
+mutate: 16.098, simulate: 79.858
+(max, avg) unadjusted fitness of generation 202 = (128, 14.096)
+mutate: 16.184, simulate: 79.699
+(max, avg) unadjusted fitness of generation 203 = (256, 14.908)
+mutate: 20.748, simulate: 81.298
+(max, avg) unadjusted fitness of generation 204 = (128, 14.058)
+mutate: 338.899, simulate: 91.008
+(max, avg) unadjusted fitness of generation 205 = (256, 14.546)
+mutate: 17.368, simulate: 82.750
+(max, avg) unadjusted fitness of generation 206 = (128, 13.142)
+mutate: 19.131, simulate: 87.465
+(max, avg) unadjusted fitness of generation 207 = (128, 13.178)
+mutate: 16.265, simulate: 83.002
+(max, avg) unadjusted fitness of generation 208 = (256, 13.378)
+mutate: 9.210, simulate: 78.787
+(max, avg) unadjusted fitness of generation 209 = (128, 13.208)
+mutate: 439.292, simulate: 139.008
+(max, avg) unadjusted fitness of generation 210 = (128, 12.908)
+mutate: 46.599, simulate: 124.634
+(max, avg) unadjusted fitness of generation 211 = (128, 12.918)
+mutate: 30.849, simulate: 117.151
+(max, avg) unadjusted fitness of generation 212 = (128, 12.944)
+mutate: 641.191, simulate: 106.297

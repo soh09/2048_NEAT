@@ -66,13 +66,18 @@ be insightful for me.
                 - chosen synapse must not create a loop, and ideally source neuron should be lower order in a topological sort
             - neuron bias change (low priority)
             - synapse weight change 
-    - [ ] implement some sort of species differentiating algorithm
-    - [ ] implement logic for evolving networks
-        - when to "kill" certain underperforming species
-        - probabilities for sexual reproduction, asexual reproduction, etc
+    - [x] implement some sort of species differentiating algorithm
+    - [x] implement logic for evolving networks
+        - [ ] when to "kill" certain underperforming species
+        - [ ] probabilities for sexual reproduction, asexual reproduction, etc
 
 3. Simulation of Generations and Populations
     - [x] create Sandbox class, which takes in a Network class, instantiates a Game object, and makes it play till game over/win condition is met
+
+4. Optimization
+    - [x] enable multiprocessing for parallel simulation
+    - [ ] optimize nn.NetworkGenome.distance() 
+        - [x] optimized the difference calculation by removing unnecessary set creation, adding early stopping
 
 ### To Do
 - [ ] think about neuron and synapse cross over probabilities (dominant vs recessive)
@@ -92,6 +97,24 @@ the forward pass is done properly
     - ie, all input neurons must be forward-passed for the output neuron to forward
 - depth-first search is used for creating new connections as a mutation, to ensure no cycles emerge
     - with this approach, a hidden neuron can feed back into a input neuron, should I allow this?
+
+### Optimization
+- This is the first time I'm having to actually profile my code to determine which lines are taking up precious runtime. It's been pretty interesting.
+- I'm using the kernprof tool, which allows me to profile the performance of each line
+    - \# of hits, and total time it took that run that line
+#### Optimizing NetworkGenome.distance()
+- I'm trying various things like
+    - early stopping (if the speciation threshold is met at certain points in the code, return, instead of continuing to the end)
+        - this works because for our purposes, we just need to know if they are over or under the threshold, the actual value does not matter
+    - removing unnecessary function calls
+        - I was creating a set of synapse IDs from a list, which is an O(N) operation. 
+        This is necessary, because I have a dict whose key's are the IDs. I can simply do `e in dict` to achieve O(1) set membership.
+    - instead of iterating net1.synapse_ids and net2.synapse_ids separately, union them, and iterate over this new set.
+        - this approach sounded good, but it made early stopping harder. In the two loops case, I can check if the 
+        threshold is met after the first loop (so only one early stopping point), but with this approach, I would have to check 
+        if the early stopping condition is met at every iteration. The early stopping condition actually now adds overhead. I could
+        maybe do like a check every 100 iterations, but at this point, I went with two loops, early stopping, remove unnecessary set creation. This 
+        approach already created enough time savings, imo.
 
 ## Progression
 | date  | details |
@@ -113,6 +136,9 @@ the forward pass is done properly
 |  8/3  | Debugged speciation logic. Need to fix mutate_and_speciate(), resets dictionary prematurely. |
 |  8/5  | Debugged Simulation.py. Started testing simulation, seems to be working, might need to implement multithreading for simulation to speed things up |
 |  8/15 | My worst fear has been confirmed. Multiprocessing requires me to rethink a lot of my code, as when you pass in an object to a function to be multiprocessed, it creates a COPY of the object, it doesn't use the actual object ;-; |
+| 8/16  | Implemented MultiProcessing. It actually wasn't that hard thankfully. |
+| 8/18  | Every 3-4 iterations, the code spikes (like x10-20) in runtime, and I need to figure out why. This is majorly contributing to slow training. Profiling code in misc_dev folder. |
+| 8/18 (2)  | Profiled code. Don't know about the mutation spiking, but brought down runtime in general by optimizing NetworkGenome.distance(). |
 
 # Attribution
 

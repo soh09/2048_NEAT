@@ -78,6 +78,7 @@ def display_gene(synapse_genes):
     ids = [sg.id for sg in synapse_genes]
     min_id = min(ids)
     max_id = max(ids)
+    print(max_id)
 
     fig, ax = plt.subplots(figsize=(max_id * 0.8, 0.8))
 

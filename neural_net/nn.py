@@ -451,11 +451,12 @@ class NetworkGenome:
         return child
 
     @staticmethod
-    def distance(net1: 'NetworkGenome', net2: 'NetworkGenome', w_disjoint :float, w_excess :float, w_weight :float):
+    # @profile
+    def distance(net1: 'NetworkGenome', net2: 'NetworkGenome', w_disjoint :float, w_excess :float, w_weight :float, threshold :float):
         N = max(len(net1.synapse_gene), len(net2.synapse_gene))
 
-        set1 = set([sg.id for sg in net1.synapse_gene])
-        set2 = set([sg.id for sg in net2.synapse_gene])
+        # set1 = set([sg.id for sg in net1.synapse_gene])
+        # set2 = set([sg.id for sg in net2.synapse_gene])
 
         max_net1 = net1.synapse_gene[-1].id
         max_net2 = net2.synapse_gene[-1].id
@@ -463,7 +464,8 @@ class NetworkGenome:
         disjoint, excess, common, weight_diff = 0, 0, 0, 0
 
         for sg in net1.synapse_gene:
-            if sg.id not in set2:
+            # if sg.id not in set2:
+            if sg.id not in net2.synapse_ids:
                 if sg.id < max_net2:
                     disjoint += 1
                 else:
@@ -472,14 +474,21 @@ class NetworkGenome:
                 weight_diff += abs(sg.weight - net2.find_synapse(sg.id).weight)
                 common += 1
 
+        w_bar = weight_diff / common
+        # implementing early stopping
+        delta = disjoint * w_disjoint + excess * w_excess + w_bar * w_weight
+
+        if delta >= threshold:
+            return delta
+
         for sg in net2.synapse_gene:
-            if sg.id not in set1:
+            # if sg.id not in set1:
+            if sg.id not in net1.synapse_ids:
                 if sg.id < max_net1:
                     disjoint += 1
                 else:
                     excess += 1
-
-        w_bar = weight_diff / common
+        
 
         delta = disjoint * w_disjoint + excess * w_excess + w_bar * w_weight
         
@@ -488,7 +497,7 @@ class NetworkGenome:
     @staticmethod
     def save_genome(genome: 'NetworkGenome', fp: str):
         with open(fp, 'wb') as file:
-            pickle.dump(file, genome)
+            pickle.dump(genome, file)
     
     @staticmethod
     def load_genome(fp: str):

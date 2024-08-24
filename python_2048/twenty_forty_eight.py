@@ -163,7 +163,7 @@ class Game:
             l.extend(row)
         return l
     
-    def make_next_move(self, move: str, debug = False): # move will be provided by neural net
+    def do_next_move(self, move: str, debug = False): # move will be provided by neural net
         self.mat, _ = Game.move_d[move](self.mat, debug)
         state = game_state(self.mat)
         return state
