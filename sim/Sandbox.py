@@ -21,7 +21,7 @@ class Sandbox:
         # set the input
         self.network.set_input(self.game.get_board())
     
-    def make_next_move(self):
+    def make_next_move(self, reward_type):
         # perform forward pass
         self.network.forward()
         # softmax the output layer
@@ -30,20 +30,20 @@ class Sandbox:
         max_neuron_idx = max(range(self.network.output_l.n_neurons), key=lambda i: self.network.output_l.neurons[i].get_activation())
         move = Sandbox.neuron_to_move[max_neuron_idx]
 
-        new_game_state = self.game.do_next_move(move, self.debug)
+        new_game_state = self.game.do_next_move_and_track(move, self.debug)
         if self.debug:
             print(self.game)
 
         if self.game.get_board() == self.previous_state:
-            max_n = self.game.get_max_item()
-            self.network.set_fitness(max_n)
+            reward = self.game.get_reward(reward_type)
+            self.network.set_fitness(reward)
             # print(self.game)
-            raise GameStuckException(f'Game stuck at score {max_n}')
+            raise GameStuckException(f'Game stuck at score {reward}')
         if new_game_state == 'lose':
-            max_n = self.game.get_max_item()
-            self.network.set_fitness(max_n)
+            reward = self.game.get_reward(reward_type)
+            self.network.set_fitness(reward)
             # print(self.game)
-            raise GameLostException(f'Game lost at score {max_n}')
+            raise GameLostException(f'Game lost at score {reward}')
         elif new_game_state == 'win':
             self.network.set_fitness(2048)
             # print(self.game)

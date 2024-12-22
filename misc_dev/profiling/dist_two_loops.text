@@ -10,7 +10,6 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
    456   1154631     267794.0      0.2      0.5          N = max(len(net1.synapse_gene), len(net2.synapse_gene))
    457                                           
    458                                                   # set1 = set([sg.id for sg in net1.synapse_gene])
-   459                                                   # set2 = set([sg.id for sg in net2.synapse_gene])
    460                                           
    461   1154631     175171.0      0.2      0.4          max_net1 = net1.synapse_gene[-1].id
    462   1154631     123054.0      0.1      0.2          max_net2 = net2.synapse_gene[-1].id
@@ -31,9 +30,12 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
    477   1154631     125383.0      0.1      0.3          w_bar = weight_diff / common
    478                                                   # implementing early stopping
    479   1154631     166333.0      0.1      0.3          delta = disjoint * w_disjoint + excess * w_excess + w_bar * w_weight
+
    480   1154631     129037.0      0.1      0.3          if delta >= threshold:
    481   1008150     309806.0      0.3      0.6              return delta
    482                                           
+
+   
    483  10195300    1112219.0      0.1      2.2          for sg in net2.synapse_gene:
    484                                                       # if sg.id not in set1:
    485  10048819    1151934.0      0.1      2.3              if sg.id not in net1.synapse_ids:

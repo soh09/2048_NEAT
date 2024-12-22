@@ -1,0 +1,50 @@
+Total time: 47.4866 s
+File: /Users/so/Documents/projects/personal/2048_AI/neural_net/nn.py
+Function: distance at line 453
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   453                                               @staticmethod
+   454                                               @profile
+   455                                               def distance(net1_sg: list[SynapseGene], net2: 'NetworkGenome', w_disjoint :float, w_excess :float, w_weight :float, threshold :float):
+   456   1108360     207120.0      0.2      0.4          N = max(len(net1_sg), len(net2.synapse_gene))
+   457                                           
+   458                                                   # set2 = set([sg.id for sg in net2.synapse_gene])
+   459                                           
+   460   1108360     151396.0      0.1      0.3          max_net1 = net1_sg[-1].id
+   461   1108360     115440.0      0.1      0.2          max_net2 = net2.synapse_gene[-1].id
+   462                                           
+   463   1108360     100498.0      0.1      0.2          disjoint, excess, common, weight_diff = 0, 0, 0, 0
+   464                                           
+   465  76179887    7003511.0      0.1     14.7          for sg in net1_sg:
+   466                                                       # if sg.id not in set2:
+   467  75071527    8779840.0      0.1     18.5              if sg.id not in net2.synapse_ids:
+   468   3603617     386796.0      0.1      0.8                  if sg.id < max_net2:
+   469   3603617     299652.0      0.1      0.6                      disjoint += 1
+   470                                                           else:
+   471                                                               excess += 1
+   472                                                       else:
+   473  71467910   20177393.0      0.3     42.5                  weight_diff += abs(sg.weight - net2.find_synapse(sg.id).weight)
+   474  71467910    5990833.0      0.1     12.6                  common += 1
+   475                                           
+   476   1108360     118440.0      0.1      0.2          w_bar = weight_diff / common
+   477                                                   # implementing early stopping
+   478   1108360     156150.0      0.1      0.3          delta = disjoint * w_disjoint + excess * w_excess + w_bar * w_weight
+   479                                           
+   480   1108360     121496.0      0.1      0.3          if delta >= threshold:
+   481    964771     279835.0      0.3      0.6              return delta
+   482                                                   
+   483   9643368    1337287.0      0.1      2.8          set1 = set([sg.id for sg in net1_sg])
+   484                                           
+   485   9960620    1063652.0      0.1      2.2          for sg in net2.synapse_gene:
+   486                                                       # if sg.id not in set1:
+   487   9817031    1058018.0      0.1      2.2              if sg.id not in set1:
+   488    317252      34045.0      0.1      0.1                  if sg.id < max_net1:
+   489                                                               disjoint += 1
+   490                                                           else:
+   491    317252      26245.0      0.1      0.1                      excess += 1
+   492                                                                      
+   494    143589      22149.0      0.2      0.0          delta = disjoint * w_disjoint + excess * w_excess + w_bar * w_weight
+   495                                                   
+   496    143589      56759.0      0.4      0.1          return delta
+

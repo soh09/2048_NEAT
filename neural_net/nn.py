@@ -4,7 +4,7 @@ from .LSD import LSD
 import pickle
 
 
-from sim.constants import NEURON_ADD_CHANCE, SYNAPSE_WEIGHT_CHANGE_CHANCE, SYNAPSE_ADD_CHANCE
+from sim.constants import NEURON_ADD_CHANCE, SYNAPSE_WEIGHT_CHANGE_CHANCE, SYNAPSE_ADD_CHANCE, SYNAPSE_SWITCH_CHANCE
 
 # Implements Neurons, Synapses, Layer, and Network
 
@@ -284,6 +284,12 @@ class NetworkGenome:
                 new_weight = random.uniform(0, 1)
                 # print(f'[synapse weight change mutation] @ sg {sg.id} ({sg.weight:.2f} -> {new_weight:.2f})')
                 sg.weight = new_weight
+            
+            if not synapse_weight_change:
+                synapse_switch = random.random() <= SYNAPSE_SWITCH_CHANCE
+                if synapse_switch:
+                    sg.is_on = not sg.is_on
+
 
         # neuron add
         # done by disabling an existing synapse, adding two new synapses, with a neuron in between
@@ -452,18 +458,17 @@ class NetworkGenome:
 
     @staticmethod
     # @profile
-    def distance(net1: 'NetworkGenome', net2: 'NetworkGenome', w_disjoint :float, w_excess :float, w_weight :float, threshold :float):
-        N = max(len(net1.synapse_gene), len(net2.synapse_gene))
+    def distance(net1_sg: list[SynapseGene], net2: 'NetworkGenome', w_disjoint :float, w_excess :float, w_weight :float, threshold :float):
+        N = max(len(net1_sg), len(net2.synapse_gene))
 
-        # set1 = set([sg.id for sg in net1.synapse_gene])
         # set2 = set([sg.id for sg in net2.synapse_gene])
 
-        max_net1 = net1.synapse_gene[-1].id
+        max_net1 = net1_sg[-1].id
         max_net2 = net2.synapse_gene[-1].id
 
         disjoint, excess, common, weight_diff = 0, 0, 0, 0
 
-        for sg in net1.synapse_gene:
+        for sg in net1_sg:
             # if sg.id not in set2:
             if sg.id not in net2.synapse_ids:
                 if sg.id < max_net2:
@@ -480,10 +485,12 @@ class NetworkGenome:
 
         if delta >= threshold:
             return delta
+        
+        set1 = set([sg.id for sg in net1_sg])
 
         for sg in net2.synapse_gene:
             # if sg.id not in set1:
-            if sg.id not in net1.synapse_ids:
+            if sg.id not in set1:
                 if sg.id < max_net1:
                     disjoint += 1
                 else:

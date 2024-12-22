@@ -139,6 +139,11 @@ the forward pass is done properly
 | 8/16  | Implemented MultiProcessing. It actually wasn't that hard thankfully. |
 | 8/18  | Every 3-4 iterations, the code spikes (like x10-20) in runtime, and I need to figure out why. This is majorly contributing to slow training. Profiling code in misc_dev folder. |
 | 8/18 (2)  | Profiled code. Don't know about the mutation spiking, but brought down runtime in general by optimizing NetworkGenome.distance(). |
+|  9/1  | Optimized mutate_and_speciate(). No longer deepcopying the entire NetworkGenome for progenitor, instead only deepcopying the synapse_gene list. Brought down mutate_and_speciate() runtime by half. |
+| 9/1 (2) | Added logic in reproduce() to kill off stagnant species. Added logic to make 3% of population a hybrid of two random species, this will introduce more genetic variation and allow for faster search. |
+| 9/21  | Showed 2048 AI project to former boss Sato-san. He really liked it hehe. |
+| 9/23  | Added new reward function with returns the number of cubes combined. This is a more fine grain reward signal compared to the highest number. Misc debugging. Feels like something is odd, look into if adjusted fitnesses are being calculated properly. | 
+| 12/22 | Picking up where I left off. Checking fitness function.
 
 # Attribution
 

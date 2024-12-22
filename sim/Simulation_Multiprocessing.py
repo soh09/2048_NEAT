@@ -3,7 +3,7 @@ import neural_net.nn as nn
 import random
 from math import e
 from copy import deepcopy
-from constants import POP_SIZE, SPECIATION_THRESHOLD, W_DISJOINT, W_EXCESS, W_WEIGHT
+from constants import POP_SIZE, SPECIATION_THRESHOLD, W_DISJOINT, W_EXCESS, W_WEIGHT, KILL_SPECIES_AFTER_NO_IMPROVEMENTS
 import multiprocessing as mp
 import time
 
@@ -46,6 +46,7 @@ class Simulation:
         #     species_num: {
         #         'progenitor': nn.NetworkGenome,
         #         'children': list [nn.NetworkGenome]
+        #         'stats': [generation where max fitness was seen, max fitness]
         #     }
         # }
         self.species = {}
@@ -64,7 +65,7 @@ class Simulation:
             # if first genome, that will automatically be the progenitor 
             if i == 0:
                 # progenitor has to be deepcopy, because this genome will be modified in-place later when mutated
-                self.species[self.species_counter] = {'progenitor': deepcopy(genome), 'children': [genome]}
+                self.species[self.species_counter] = {'progenitor': deepcopy(genome.synapse_gene), 'children': [genome], 'stats': [self.current_gen, 0]}
                 genome.species = 0
                 self.species_counter += 1
             else:
@@ -82,8 +83,8 @@ class Simulation:
                         break
                 if new_species:
                     # print('new species')
-                    self.species[self.species_counter] = {'progenitor': deepcopy(genome), 'children': [genome]}
-                    genome.species = species_num
+                    self.species[self.species_counter] = {'progenitor': deepcopy(genome.synapse_gene), 'children': [genome], 'stats': [self.current_gen, 0]}
+                    genome.species = self.species_counter
                     self.species_counter += 1
         for species_num in self.species:
             n = len(self.species[species_num]['children'])
@@ -96,7 +97,6 @@ class Simulation:
         # reset self.species
         for species_num in self.species:
             self.species[species_num]['children'] = []
-
         now = 0
         
         # mutate genomes
@@ -106,7 +106,6 @@ class Simulation:
             else:
                 # set mutable to True for this generations, so it can be mutated in future generations
                 genome.mutable = True
-
 
             # then put in appropriate species
             new_species = True
@@ -125,8 +124,8 @@ class Simulation:
 
             if new_species:
                 # print('new species')
-                self.species[self.species_counter] = {'progenitor': deepcopy(genome), 'children': [genome]}
-                genome.species = species_num
+                self.species[self.species_counter] = {'progenitor': deepcopy(genome.synapse_gene), 'children': [genome], 'stats': [self.current_gen, 0]}
+                genome.species = self.species_counter
                 self.species_counter += 1
 
         
@@ -154,11 +153,16 @@ class Simulation:
         self.sandboxes = [Sandbox(nn.Network(genome)) for genome in self.genomes]
 
         # multiprocessing
-        with mp.Pool(processes=mp.cpu_count()) as pool:
+        with mp.Pool(processes=5) as pool:
             fitness_scores = pool.map(self.simulate_single_sandbox, self.sandboxes)
 
         for sb, fitness in zip(self.sandboxes, fitness_scores):
             sb.network.set_fitness(fitness)
+
+            # potentially update the max fitness for that species
+            if sb.network.fitness > self.species[sb.network.genome.species]['stats'][1]:
+                self.species[sb.network.genome.species]['stats'][0] = self.current_gen
+                self.species[sb.network.genome.species]['stats'][1] = sb.network.fitness
 
         max_fitness = max(fitness_scores)
         avg_fitness = sum(fitness_scores) / len(fitness_scores)
@@ -193,6 +197,17 @@ class Simulation:
         '''
         next_gen: list [nn.NetworkGenome] = []
 
+        # check for stagnant species, and kill that species off
+        current_species = list(self.species.keys())
+        killed = 0
+        for species_num in current_species:
+            if self.species[species_num]['stats'][0] < self.current_gen - KILL_SPECIES_AFTER_NO_IMPROVEMENTS:
+                killed += 1
+                del self.species[species_num]
+                del self.species_size[species_num]
+
+        print(f'total # of species: {len(current_species)}, # of stagnant species: {killed}')
+
         species_fitness = {}
         for species_num in self.species:
             species_fitness[species_num] = sum([g.fitness for g in self.species[species_num]['children']])
@@ -202,6 +217,16 @@ class Simulation:
                 # set mutable to False to prevent mutation in next generation
                 self.species[species_num]['children'][0].mutable = False
                 next_gen.append(self.species[species_num]['children'][0])
+        
+        # do inter-species mating for 3% of the population
+        species_list = list(self.species.keys())
+        for _ in range(int(POP_SIZE * 0.03)):
+            parent1_species, parent2_species = random.choices(species_list, k = 2)
+            parent1 = random.choice(self.species[parent1_species]['children'])
+            parent2 = random.choice(self.species[parent2_species]['children'])
+            offspring = nn.NetworkGenome.from_crossover(parent1, parent2)
+            next_gen.append(offspring)
+
         
         remaining = self.pop_size - len(next_gen)
         species_allocation = {}

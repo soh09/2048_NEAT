@@ -136,6 +136,7 @@ def right(game, debug):
     return game, done
 
 def generate_next(game):
+    # this function only ever adds one number at a time
     index = (gen(), gen())
     while game[index[0]][index[1]] != 0:
         index = (gen(), gen())
@@ -153,9 +154,26 @@ class Game:
 
     def __init__(self):
         self.mat = new_game(GRID_LEN)
+        self.combined = 1 # start with 1 to avoid zero division later in fitness adjustment or allocating # of offsprings
+        self.filled_in = 0 # number of non-zero numbers present in previous board
+
+        for i in range(GRID_LEN):
+            for j in range(GRID_LEN):
+                if self.mat[i][j] != 0:
+                    self.filled_in += 1
 
     def get_max_item(self): # this is the fitness of the neural net
-        return max(max(row) for row in self.mat)    
+        return max(max(row) for row in self.mat)
+
+    def get_numbers_combined(self):
+        return self.combined
+    
+    def get_reward(self, reward_type):
+        if reward_type == 'MAX VALUE':
+            return self.get_max_item()
+        
+        if reward_type == 'COMBINED NUMBERS':
+            return self.get_numbers_combined()
     
     def get_board(self): # this will be the input to the neural net
         l = []
@@ -168,8 +186,27 @@ class Game:
         state = game_state(self.mat)
         return state
     
+    def do_next_move_and_track(self, move: str, debug = False):
+        new_mat, _ = Game.move_d[move](self.mat, debug)
+
+        # calculate the number of squares that were combined
+        new_filled_in = 0
+        for i in range(GRID_LEN):
+            for j in range(GRID_LEN):
+                if new_mat[i][j] != 0:
+                    new_filled_in += 1
+        diff = self.filled_in - new_filled_in
+        self.combined += diff
+        self.filled_in = new_filled_in
+        self.mat = new_mat
+
+        state = game_state(self.mat)
+        return state
+    
     def generate_next(self):
         generate_next(self.mat)
+        self.filled_in += 1 # generate_next() always adds one number to the board
+
 
     def __repr__(self):
         return '[' + '\n '.join(['[' + ', '.join([str(i) for i in row]) + ']' for row in self.mat]) + ']'

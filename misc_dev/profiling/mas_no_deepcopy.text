@@ -1,0 +1,45 @@
+mutate_and_speciate() without deepcopying the entire NetworkGenome, instead just the synapse_gene list.
+
+Total time: 33.3673 s
+File: /Users/so/Documents/projects/personal/2048_AI/sim/Simulation.py
+Function: mutate_and_speciate at line 93
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    93                                               @profile
+    94                                               def mutate_and_speciate(self):
+    95                                                   # reset self.species
+    96      2300        303.0      0.1      0.0          for species_num in self.species:
+    97      2250      50225.0     22.3      0.2              self.species[species_num]['children'] = []
+    98                                                   
+    99                                                   # mutate genomes
+   100     50050       5225.0      0.1      0.0          for genome in self.genomes:
+   101     50000      11074.0      0.2      0.0              if genome.mutable:
+   102     48180     586362.0     12.2      1.8                  genome.mutate()
+   103                                                       else:
+   104                                                           # set mutable to True for this generations, so it can be mutated in future generations
+   105      1820        246.0      0.1      0.0                  genome.mutable = True
+   106                                           
+   107                                                       # then put in appropriate species
+   108     50000       4475.0      0.1      0.0              new_species = True
+   109   1145681     100126.0      0.1      0.3              for species_num in self.species:
+   110                                                           # print(f'checking {species_num}')
+   111   1145210   31643953.0     27.6     94.8                  dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight, self.speciation_threshold)
+   112                                                           # print(dist)
+   113   1145210     122218.0      0.1      0.4                  if dist < self.speciation_threshold: # if genome is the same species as species_num
+   114     49529       3820.0      0.1      0.0                      new_species = False
+   115     49529       6813.0      0.1      0.0                      self.species[species_num]['children'].append(genome)
+   116     49529       5529.0      0.1      0.0                      genome.species = species_num
+   117     49529       4342.0      0.1      0.0                      break
+   118     50000       6287.0      0.1      0.0              if new_species:
+   119                                                           # print('new species')
+   120       471     814972.0   1730.3      2.4                  self.species[self.species_counter] = {'progenitor': deepcopy(genome.synapse_gene), 'children': [genome]}
+   121       471        166.0      0.4      0.0                  genome.species = species_num
+   122       471         69.0      0.1      0.0                  self.species_counter += 1
+   123                                           
+   124                                                   # remove species_nums that have no more children (extinct species)
+   125        50         86.0      1.7      0.0          current_species = list(self.species.keys())
+   126      2771        339.0      0.1      0.0          for species_num in current_species:
+   127      2721        713.0      0.3      0.0              if not self.species[species_num]['children']:
+   128                                                           del self.species[species_num]
+   129                                                           del self.species_size[species_num]
