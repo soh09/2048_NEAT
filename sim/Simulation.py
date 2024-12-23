@@ -4,8 +4,10 @@ import random
 from math import e
 from copy import deepcopy
 from constants import POP_SIZE, SPECIATION_THRESHOLD, W_DISJOINT, W_EXCESS, W_WEIGHT, KILL_SPECIES_AFTER_NO_IMPROVEMENTS, REWARD_TYPE
-
-
+import time
+from datetime import datetime
+import os
+import json
 
 class Simulation:
     '''
@@ -29,7 +31,9 @@ class Simulation:
             w_disjoint: float = W_DISJOINT, 
             w_excess: float = W_EXCESS, 
             w_weight: float = W_WEIGHT,
-            reward_type: str = REWARD_TYPE):
+            reward_type: str = REWARD_TYPE,
+            log_folder: str = None,
+            debug = False):
         
         self.pop_size = population
         self.speciation_threshold = spec_thres
@@ -41,6 +45,25 @@ class Simulation:
         self.species_counter = 0
         
         self.current_gen = 0
+
+        self.log = {
+            'current_gen': 0,
+            'avg_fitness': 0,
+            'max_fitness': 0,
+            'sim_time': 0,
+            'mutate_time': 0,
+            'alive_species': 0,
+            'stagnant_species': 0,
+            'species_list': []
+        }
+        
+        self.debug = debug
+        self.log_folder = log_folder
+        self.log_file = None
+        if self.log_folder:
+            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '.txt'
+            self.log_file = os.path.join(self.log_folder, timestamp)
+
         
         # self.species structure
         # self.species = {
@@ -95,6 +118,8 @@ class Simulation:
 
     # @profile
     def mutate_and_speciate(self):
+        now = time.time()
+
         # reset self.species
         for species_num in self.species:
             self.species[species_num]['children'] = []
@@ -131,20 +156,29 @@ class Simulation:
                 del self.species[species_num]
                 del self.species_size[species_num]
 
+        self.log['mutate_time'] = time.time() - now
+
+        self.create_log()
+
+        
+
 
     # @profile
     def simulate(self):
-        self.sandboxes = [Sandbox(nn.Network(genome)) for genome in self.genomes]
+        now = time.time()
+
+        self.sandboxes = [Sandbox(nn.Network(genome), self.debug) for genome in self.genomes]
         max_fitness = 0
-        avg_fitness = 0
-        for _, sandbox in enumerate(self.sandboxes):
+        total_fitness = 0
+        for i, sandbox in enumerate(self.sandboxes):
+            # print(f'individual {i}')
             while True:
                 try: # try to continue playing the game 
                     sandbox.set_input()
                     sandbox.make_next_move(self.reward_type)
                     sandbox.reset_update()
                 except Exception as e:
-                    avg_fitness += sandbox.network.fitness
+                    total_fitness += sandbox.network.fitness
                     if max_fitness < sandbox.network.fitness:
                         max_fitness = sandbox.network.fitness
 
@@ -152,10 +186,15 @@ class Simulation:
                     if sandbox.network.fitness > self.species[sandbox.network.genome.species]['stats'][1]:
                         self.species[sandbox.network.genome.species]['stats'][0] = self.current_gen
                         self.species[sandbox.network.genome.species]['stats'][1] = sandbox.network.fitness
-                    # print(e)
                     # print(f'Sandbox {i} finished with score of {sandbox.network.fitness}')
                     break # once a game has won, lost, or gotten stuck, break While loop, move onto new sandbox
-        print(f'(max, avg) unadjusted fitness of generation {self.current_gen} = {(max_fitness, avg_fitness / POP_SIZE)}')
+
+        total = time.time() - now
+        print(f'(max, avg) unadjusted fitness of generation {self.current_gen} = {(max_fitness, total_fitness / POP_SIZE)}')
+        self.log['current_gen'] = self.current_gen
+        self.log['sim_time'] = total
+        self.log['max_fitness'] = max_fitness
+        self.log['avg_fitness'] = total_fitness / POP_SIZE
         self.current_gen += 1
 
     def adjust_fitness(self):
@@ -192,6 +231,8 @@ class Simulation:
 
         print(f'total # of species: {len(current_species)}, # of stagnant species: {killed}')
 
+
+
         species_fitness = {}
         for species_num in self.species:
             species_fitness[species_num] = sum([g.fitness for g in self.species[species_num]['children']])
@@ -219,7 +260,7 @@ class Simulation:
 
         for species_num in self.species:
             species_allocation[species_num] = int(species_fitness[species_num] / total_fitness * remaining)
-        
+
         # ensure next gen has correct number of individuals
         while sum(species_allocation.values()) < remaining:
             species_allocation[random.choice(list(species_allocation.keys()))] += 1
@@ -239,6 +280,11 @@ class Simulation:
         # update self.genomes + clear self.sandboxes
         self.genomes = next_gen
         self.sandboxes = []
+
+        self.log['alive_species'] = len(current_species)
+        self.log['stagnant_species'] = killed
+        self.log['species_list'] = ', '.join([str(s) for s in species_list])
+
 
     @staticmethod
     def create_dense_network(input_count=16, output_count=4):
@@ -264,3 +310,12 @@ class Simulation:
         nn.NetworkGenome.NIN = input_count + output_count
         
         return network_genome
+
+    def create_log(self):
+        '''
+        information to log:
+        current_gen, avg_fitness, max_fitness, sim_time, mutate_time, 
+        '''
+        if self.log_folder:
+            with open(self.log_file, 'a') as log:
+                log.write(json.dumps(self.log) + '\n')

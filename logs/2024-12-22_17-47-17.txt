@@ -1,0 +1,21 @@
+{"current_gen": 0, "avg_fitness": 3.519, "max_fitness": 30, "sim_time": 0.2254180908203125, "mutate_time": 0.02012801170349121, "alive_species": 1, "stagnant_species": 0, "species_list": "0"}
+{"current_gen": 1, "avg_fitness": 3.478, "max_fitness": 28, "sim_time": 0.17969989776611328, "mutate_time": 0.01759505271911621, "alive_species": 1, "stagnant_species": 0, "species_list": "0"}
+{"current_gen": 2, "avg_fitness": 3.415, "max_fitness": 25, "sim_time": 0.17421793937683105, "mutate_time": 0.01828289031982422, "alive_species": 1, "stagnant_species": 0, "species_list": "0"}
+{"current_gen": 3, "avg_fitness": 3.49, "max_fitness": 37, "sim_time": 0.184128999710083, "mutate_time": 0.019783735275268555, "alive_species": 1, "stagnant_species": 0, "species_list": "0"}
+{"current_gen": 4, "avg_fitness": 3.605, "max_fitness": 27, "sim_time": 0.19115996360778809, "mutate_time": 0.018815994262695312, "alive_species": 1, "stagnant_species": 0, "species_list": "0"}
+{"current_gen": 5, "avg_fitness": 3.659, "max_fitness": 23, "sim_time": 0.18874216079711914, "mutate_time": 0.01965498924255371, "alive_species": 1, "stagnant_species": 0, "species_list": "0"}
+{"current_gen": 6, "avg_fitness": 3.796, "max_fitness": 24, "sim_time": 0.19057106971740723, "mutate_time": 0.021528959274291992, "alive_species": 1, "stagnant_species": 0, "species_list": "0"}
+{"current_gen": 7, "avg_fitness": 3.769, "max_fitness": 26, "sim_time": 0.197587251663208, "mutate_time": 0.024729251861572266, "alive_species": 2, "stagnant_species": 0, "species_list": "0, 1"}
+{"current_gen": 8, "avg_fitness": 3.569, "max_fitness": 30, "sim_time": 0.6320719718933105, "mutate_time": 0.029157161712646484, "alive_species": 3, "stagnant_species": 0, "species_list": "0, 1, 2"}
+{"current_gen": 9, "avg_fitness": 3.543, "max_fitness": 21, "sim_time": 0.18895816802978516, "mutate_time": 0.033123016357421875, "alive_species": 3, "stagnant_species": 0, "species_list": "0, 1, 2"}
+{"current_gen": 10, "avg_fitness": 3.565, "max_fitness": 26, "sim_time": 0.1891322135925293, "mutate_time": 0.03209686279296875, "alive_species": 3, "stagnant_species": 0, "species_list": "0, 1, 2"}
+{"current_gen": 11, "avg_fitness": 3.439, "max_fitness": 27, "sim_time": 0.18699193000793457, "mutate_time": 0.030627965927124023, "alive_species": 3, "stagnant_species": 0, "species_list": "0, 1, 2"}
+{"current_gen": 12, "avg_fitness": 3.487, "max_fitness": 32, "sim_time": 0.19362902641296387, "mutate_time": 0.033957719802856445, "alive_species": 3, "stagnant_species": 0, "species_list": "0, 1, 2"}
+{"current_gen": 13, "avg_fitness": 3.648, "max_fitness": 29, "sim_time": 0.19425201416015625, "mutate_time": 0.03748297691345215, "alive_species": 4, "stagnant_species": 0, "species_list": "0, 1, 2, 3"}
+{"current_gen": 14, "avg_fitness": 3.386, "max_fitness": 25, "sim_time": 0.9989550113677979, "mutate_time": 0.04950571060180664, "alive_species": 6, "stagnant_species": 0, "species_list": "0, 1, 2, 3, 4, 5"}
+{"current_gen": 15, "avg_fitness": 3.455, "max_fitness": 31, "sim_time": 0.20322704315185547, "mutate_time": 0.04677605628967285, "alive_species": 6, "stagnant_species": 0, "species_list": "0, 1, 2, 3, 4, 5"}
+{"current_gen": 16, "avg_fitness": 3.448, "max_fitness": 40, "sim_time": 0.1952660083770752, "mutate_time": 0.04627585411071777, "alive_species": 6, "stagnant_species": 0, "species_list": "0, 1, 2, 3, 4, 5"}
+{"current_gen": 17, "avg_fitness": 3.611, "max_fitness": 27, "sim_time": 0.19976019859313965, "mutate_time": 0.047823190689086914, "alive_species": 6, "stagnant_species": 0, "species_list": "0, 1, 2, 3, 4, 5"}
+{"current_gen": 18, "avg_fitness": 3.395, "max_fitness": 36, "sim_time": 0.18390893936157227, "mutate_time": 0.06670904159545898, "alive_species": 9, "stagnant_species": 0, "species_list": "0, 1, 2, 3, 4, 5, 6, 7, 8"}
+{"current_gen": 19, "avg_fitness": 3.546, "max_fitness": 24, "sim_time": 0.18919610977172852, "mutate_time": 0.06891608238220215, "alive_species": 12, "stagnant_species": 0, "species_list": "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11"}
+{"current_gen": 20, "avg_fitness": 3.622, "max_fitness": 33, "sim_time": 0.20919084548950195, "mutate_time": 0.07766103744506836, "alive_species": 12, "stagnant_species": 0, "species_list": "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11"}

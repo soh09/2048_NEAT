@@ -143,7 +143,7 @@ the forward pass is done properly
 | 9/1 (2) | Added logic in reproduce() to kill off stagnant species. Added logic to make 3% of population a hybrid of two random species, this will introduce more genetic variation and allow for faster search. |
 | 9/21  | Showed 2048 AI project to former boss Sato-san. He really liked it hehe. |
 | 9/23  | Added new reward function with returns the number of cubes combined. This is a more fine grain reward signal compared to the highest number. Misc debugging. Feels like something is odd, look into if adjusted fitnesses are being calculated properly. | 
-| 12/22 | Picking up where I left off. Checking fitness function.
+| 12/22 | Picking up where I left off. Modified 2048 code to randomly choose 2 or 4 for new number. Double checked COMBINED NUMBERS fitness function. Added logging functionality.
 
 # Attribution
 
@@ -162,3 +162,5 @@ Contributors: [Yanghun Tay](http://github.com/yangshun), [Emmanuel Goh](http://g
     - For understanding how neural networks works, and understanding backpropagation
 - <a href = 'https://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf'>Evolving Neural Networks through Augmenting Topologies
     - The original NEAT paper, which provides me with details about the implementation
+- <a href = 'https://chatgpt.com'>ChatGPT
+    - The obvious

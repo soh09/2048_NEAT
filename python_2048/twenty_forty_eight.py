@@ -1,6 +1,7 @@
 # created by soh09 with most of the code borrowed from original 2048-python repository
 
 import random
+from sim.constants import FOUR_CHANCE
 GRID_LEN = 4
 
 
@@ -94,45 +95,45 @@ def merge(mat, done):
     return mat, done
 
 def up(game, debug):
-    if debug:
-        print("up")
     # return matrix after shifting up
     game = transpose(game)
     game, done = cover_up(game)
     game, done = merge(game, done)
     game = cover_up(game)[0]
     game = transpose(game)
+    if debug:
+        print("up")
     return game, done
 
 def down(game, debug):
-    if debug:
-        print("down")
     # return matrix after shifting down
     game = reverse(transpose(game))
     game, done = cover_up(game)
     game, done = merge(game, done)
     game = cover_up(game)[0]
     game = transpose(reverse(game))
+    if debug:
+        print("down")
     return game, done
 
 def left(game, debug):
-    if debug:
-        print("left")
     # return matrix after shifting left
     game, done = cover_up(game)
     game, done = merge(game, done)
     game = cover_up(game)[0]
+    if debug:
+        print("left")
     return game, done
 
 def right(game, debug):
-    if debug:
-        print("right")
     # return matrix after shifting right
     game = reverse(game)
     game, done = cover_up(game)
     game, done = merge(game, done)
     game = cover_up(game)[0]
     game = reverse(game)
+    if debug:
+        print("right")
     return game, done
 
 def generate_next(game):
@@ -140,8 +141,11 @@ def generate_next(game):
     index = (gen(), gen())
     while game[index[0]][index[1]] != 0:
         index = (gen(), gen())
-    game[index[0]][index[1]] = 2
 
+    if random.random() <= FOUR_CHANCE:
+        game[index[0]][index[1]] = 4
+    else:
+        game[index[0]][index[1]] = 2
 
 
 class Game:
@@ -181,6 +185,7 @@ class Game:
             l.extend(row)
         return l
     
+    # unused method, iteration #1 of this function
     def do_next_move(self, move: str, debug = False): # move will be provided by neural net
         self.mat, _ = Game.move_d[move](self.mat, debug)
         state = game_state(self.mat)
