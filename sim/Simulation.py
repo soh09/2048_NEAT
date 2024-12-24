@@ -163,13 +163,20 @@ class Simulation:
         
 
 
-    # @profile
+    @profile
     def simulate(self):
         now = time.time()
 
-        self.sandboxes = [Sandbox(nn.Network(genome), self.debug) for genome in self.genomes]
+        self.sandboxes = []
+        for genome in self.genomes:
+            net = nn.Network(genome)
+            self.sandboxes.append(Sandbox(net, self.debug))
+        # self.sandboxes = [Sandbox(nn.Network(genome), self.debug) for genome in self.genomes]
+
+        print(f'sandbox creation: {(time.time() - now):.3f}')
         max_fitness = 0
         total_fitness = 0
+        while_start = time.time()
         for i, sandbox in enumerate(self.sandboxes):
             # print(f'individual {i}')
             while True:
@@ -188,6 +195,8 @@ class Simulation:
                         self.species[sandbox.network.genome.species]['stats'][1] = sandbox.network.fitness
                     # print(f'Sandbox {i} finished with score of {sandbox.network.fitness}')
                     break # once a game has won, lost, or gotten stuck, break While loop, move onto new sandbox
+        
+        print(f'make next move: {(time.time() - while_start):.3f}')
 
         total = time.time() - now
         print(f'(max, avg) unadjusted fitness of generation {self.current_gen} = {(max_fitness, total_fitness / POP_SIZE)}')
