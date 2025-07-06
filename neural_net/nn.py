@@ -2,7 +2,7 @@ import random
 import math
 from .LSD import LSD
 import pickle
-
+import time
 
 from sim.constants import NEURON_ADD_CHANCE, SYNAPSE_WEIGHT_CHANGE_CHANCE, SYNAPSE_ADD_CHANCE, SYNAPSE_SWITCH_CHANCE
 
@@ -10,6 +10,7 @@ from sim.constants import NEURON_ADD_CHANCE, SYNAPSE_WEIGHT_CHANGE_CHANCE, SYNAP
 
 # the Neuron class
 class Neuron:
+    # @profile
     def __init__(self, id: int, bias: float = None, activation_f = None):
         self.id: int = id # innovation id of the neuron
         self.bias = bias # the bias of the neuron
@@ -226,7 +227,7 @@ class NetworkGenome:
         self.all_neuron_genes = self.input_neurons + self.output_neurons + self.neuron_gene
 
         self.neuron_ids = {n.id: n for n in self.all_neuron_genes}
-        self.synapse_ids = {s.id: s for s in synapse_gene}
+        self.synapse_ids = {s.id: s for s in self.synapse_gene}
 
         self.fitness = 0
 
@@ -521,10 +522,19 @@ class NetworkGenome:
 
 class Network:
     #################### change so that initializes from NetworkGenome instance
+    # @profile
     def __init__(self, genome: NetworkGenome):
         # first, express all neurons in genome
+
+        # ngs = []
         for neuron_gene in genome.all_neuron_genes:
+            # now = time.time()
             neuron_gene.express() # -----> this sets neuron_gene.expressed_neuron to an actual Neuron
+            # ng = time.time() - now
+            # if ng > 2:
+            #     print(f'ng.express() took {ng}, parameters: {neuron_gene.id, neuron_gene.bias}')
+            # ngs.append(str(ng))
+        # ngs = ', '.join(ngs) + '\n'
         
         self.input_l = Layer([n.expressed_neuron for n in genome.input_neurons])
         self.output_l = Layer([n.expressed_neuron for n in genome.output_neurons])
@@ -535,7 +545,22 @@ class Network:
 
         self.sorted_neurons = list[Neuron]
 
-        self.synapses = [s.express() for s in genome.synapse_gene]
+        # sgs = []
+        self.synapses = []
+        for s in genome.synapse_gene:
+            # now = time.time()
+            self.synapses.append(s.express())
+            # sg = time.time() - now
+            # sgs.append(str(sg))
+        
+        # sgs = ', '.join(sgs) + '\n'
+        
+        # self.synapses = [s.express() for s in genome.synapse_gene]
+
+        # path = '/Users/so/Documents/projects/personal/2048_AI/logs/init_per_iteration.txt'
+        # with open(path, 'a') as log:
+        #     log.write(ngs)
+        #     log.write(sgs)
 
     def set_input(self, inputs: list[float]): # sets the input neurons' values
         if len(inputs) != self.input_l.n_neurons:

@@ -24,8 +24,7 @@ a.adjust_fitness()
 a.reproduce()
 # [s.fitness for s in a.species[0]['children']]
 
-
-for i in range(200):
+for i in range(50):
     now = time.time()
     a.mutate_and_speciate()
     mas = time.time() - now
@@ -40,5 +39,5 @@ for i in range(200):
 
     print(f'mutate: {mas:.3f}, simulate: {sim:.3f}')
 
-    if sim >= 10:
-        break
+    # if sim >= 10:
+    #     break

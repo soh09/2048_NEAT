@@ -8,6 +8,8 @@ import time
 from datetime import datetime
 import os
 import json
+import psutil
+import gc
 
 class Simulation:
     '''
@@ -54,14 +56,19 @@ class Simulation:
             'mutate_time': 0,
             'alive_species': 0,
             'stagnant_species': 0,
-            'species_list': []
+            'species_list': [],
+            'RSS': 0,
+            'VMS': 0,
+            'gc_gen0': 0,
+            'gc_gen1': 0,
+            'gc_gen2': 0
         }
         
         self.debug = debug
         self.log_folder = log_folder
         self.log_file = None
         if self.log_folder:
-            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '.txt'
+            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '.v2.txt'
             self.log_file = os.path.join(self.log_folder, timestamp)
 
         
@@ -114,12 +121,33 @@ class Simulation:
             n = len(self.species[species_num]['children'])
             self.species_size[species_num] = n
 
+
+###############################################
+        # Enable debugging with verbosity
+        gc.set_debug(gc.DEBUG_UNCOLLECTABLE)
+
+        # Initialize counters for each generation
+        self.deallocated_objects = {0: 0, 1: 0, 2: 0}
+
+        # Callback function to tally deallocated objects
+        def gc_callback(phase, info):
+            if phase == "stop":  # Only tally after GC has finished
+                gen = info['generation']
+                self.deallocated_objects[gen] += info['collected']
+
+        # Attach the callback to GC events
+        gc.callbacks.append(gc_callback)
+
+################################################
+
         print(f'{POP_SIZE} NetworkGenomes created, ready for simulation')
 
     # @profile
     def mutate_and_speciate(self):
         now = time.time()
 
+        # TODO
+        # might be worth investigating if = [] is enough to free up memory
         # reset self.species
         for species_num in self.species:
             self.species[species_num]['children'] = []
@@ -160,20 +188,32 @@ class Simulation:
 
         self.create_log()
 
-        
 
-
-    @profile
+    # @profile
     def simulate(self):
         now = time.time()
 
+        self.deallocated_objects = {0: 0, 1: 0, 2: 0}
+
+        # path = '/Users/so/Documents/projects/personal/2048_AI/logs/nn_init.txt'
+        # with open(path, 'a') as log:
+        #     log.write(f'{self.current_gen}, ')
+
+        counts = f'{self.current_gen}, '
         self.sandboxes = []
         for genome in self.genomes:
+            # nc, sc = len(genome.neuron_ids), len(genome.synapse_ids)
+            # counts += f'{nc}, {sc}, '
             net = nn.Network(genome)
-            self.sandboxes.append(Sandbox(net, self.debug))
+            sb = Sandbox(net, self.debug)
+            self.sandboxes.append(sb)
         # self.sandboxes = [Sandbox(nn.Network(genome), self.debug) for genome in self.genomes]
 
-        print(f'sandbox creation: {(time.time() - now):.3f}')
+        # path = '/Users/so/Documents/projects/personal/2048_AI/logs/nn_init.txt'
+        # with open(path, 'a') as log:
+        #     log.write(f'\n')
+
+        # print(f'sandbox creation: {(time.time() - now):.3f}')
         max_fitness = 0
         total_fitness = 0
         while_start = time.time()
@@ -196,14 +236,24 @@ class Simulation:
                     # print(f'Sandbox {i} finished with score of {sandbox.network.fitness}')
                     break # once a game has won, lost, or gotten stuck, break While loop, move onto new sandbox
         
-        print(f'make next move: {(time.time() - while_start):.3f}')
+        # print(f'make next move: {(time.time() - while_start):.3f}')
 
         total = time.time() - now
+
+        # get memory info
+        process = psutil.Process()
+        mem_info = process.memory_info()
+
         print(f'(max, avg) unadjusted fitness of generation {self.current_gen} = {(max_fitness, total_fitness / POP_SIZE)}')
         self.log['current_gen'] = self.current_gen
         self.log['sim_time'] = total
         self.log['max_fitness'] = max_fitness
         self.log['avg_fitness'] = total_fitness / POP_SIZE
+        self.log['RSS'] = mem_info.rss
+        self.log['VMS'] = mem_info.vms
+        self.log['gc_gen0'] = self.deallocated_objects[0]
+        self.log['gc_gen1'] = self.deallocated_objects[1]
+        self.log['gc_gen2'] = self.deallocated_objects[2]
         self.current_gen += 1
 
     def adjust_fitness(self):
@@ -221,7 +271,6 @@ class Simulation:
                 # print(f'og fitness: {children.fitness}')
                 children.fitness /= n
                 # print(f'new fitness: {children.fitness}')
-    
     def reproduce(self):
         '''
         The total adjusted fitness determines how many offsprings each species will get in the next generation
@@ -293,6 +342,7 @@ class Simulation:
         self.log['alive_species'] = len(current_species)
         self.log['stagnant_species'] = killed
         self.log['species_list'] = ', '.join([str(s) for s in species_list])
+
 
 
     @staticmethod

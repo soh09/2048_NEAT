@@ -144,7 +144,8 @@ the forward pass is done properly
 | 9/21  | Showed 2048 AI project to former boss Sato-san. He really liked it hehe. |
 | 9/23  | Added new reward function with returns the number of cubes combined. This is a more fine grain reward signal compared to the highest number. Misc debugging. Feels like something is odd, look into if adjusted fitnesses are being calculated properly. | 
 | 12/22 | Picking up where I left off. Modified 2048 code to randomly choose 2 or 4 for new number. Double checked COMBINED NUMBERS fitness function. Added logging functionality.
-| 12/23 | Trying to identify root cause of runtime spikes. Pinpointed to either `Sandbox` creation or `make_next_move()`
+| 12/23 | Trying to identify root cause of runtime spikes. Pinpointed `simulation()` runtime spikes to `nn.Network()` construction. Will investigate further. Added charts in log/ for simulation performance logging.
+| 12/24 | "Network complexity explosion" is not the culprit of simulation() runtime explosion. Need to investigate further.
 
 # Attribution
 
