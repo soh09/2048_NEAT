@@ -217,3 +217,39 @@ But first, what are gen 0, 1, 2? This is a classification that the Python GC has
 Gen 2 objects are objects that have survived multiple gc cycles. My guess is that Python's GC misses some gen 1 objects at each simulation generation, and this piles up until a gen 2 collection cycle is triggered. At this point, there is a lot of garbage, and gen 2 collection struggles. For context, at the last spike (around gen 180), there were **2,080,887 gen 2 objects** to collect. The mean number of gen 0 objects collected at each simulation generation is 75,000. Maybe this can be solved by invoking the garbage collector and specifically look for gen2 objects.
 
 ![alt text](image.png)
+
+### Thoughts on memory usage in my code
+I think I know what's causing massive memory usage. Probably this line.
+```
+class Network:
+    def __init__(self, genome: NetworkGenome):
+        # express the neurons
+        # express the synapses
+        self.genome = genome # <- this one right here
+```
+I'm not exactly sure how python treats objects, but I wonder if genome objects from the past generations are accumulating and never getting cleaned up. I'm adding a print statement to the gc.collect() callback function that I've defined with the help of chat.
+
+```
+def gc_callback(phase, info):
+    if phase == "stop":  # Only tally after GC has finished
+        gen = info['generation']
+        self.deallocated_objects[gen] += info['collected']
+        # this stuff
+        i = 0
+        for obj in gc.garbage:
+            i += 1
+            print(f"  - {repr(obj)}")
+            if i == 20:
+                break
+```
+I want to see the objects that are being collected. This should give me a good idea for what objects are cluttering the gc. 
+
+## #9: The End
+So, with a little help from Cursor and Gemini, I figured out the issue causing the slow runtime. For some context, I plotted the number of Gen 2 Objects vs various other objects in my code that could feasibly accumulate (so, synapse genes, neuron genes, synapses, neurons). Here's the plot here.
+<p align="center">
+  <img src="../logs/images/gcgen2.png"/>
+</p>
+So, what do we see? We see a linearly increasing gen 2 count, and a almost exponential looking increasing "combined" count, which is just the 
+aforementioned 4 objects combined into one count. This points to maybe these objects (and maybe Networks, NetworkGenomes) not being properly 
+collected. The key idea here is "cyclic references". If you looked at my code before I implemented a fix, each Neuron/NeuronGene had a list 
+called `self.out_synapses` which held references to SynapseGenes/Synapses. Each Synapse/SynapseGene held a `self.outof` reference to a Neuron/NeuronGene. Since the neurons and synapses point to each other, this is called a circular reference. Because the reference is circular, every object always has at least 1 in-degree. The Python GC apparently uses this in-degree criteria to free stuff up, and these circular references will only be cleaned up when a gen2 collection call happens, and this operation is very slow. The idea here is to explicitly "break" these circular linkages. The way to do this is to add a function in Network and NetworkGenome called `clear()`. This goes ahead and sets lists to empty, and removes references. This allows the Python GC to efficiently garbage collect. I think we essentially had a memory leakage in PYTHON! Funny. Anyways, this issue is resolved. I just simulated 2000 generations in 38 minutes; previously it took 30 minutes for 500 generations. 

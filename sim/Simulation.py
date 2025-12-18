@@ -1,9 +1,9 @@
-from Sandbox import Sandbox as Sandbox
+from sim.Sandbox import Sandbox as Sandbox
 import neural_net.nn as nn
 import random
 from math import e
 from copy import deepcopy
-from constants import POP_SIZE, SPECIATION_THRESHOLD, W_DISJOINT, W_EXCESS, W_WEIGHT, KILL_SPECIES_AFTER_NO_IMPROVEMENTS, REWARD_TYPE
+from sim.constants import POP_SIZE, SPECIATION_THRESHOLD, W_DISJOINT, W_EXCESS, W_WEIGHT, KILL_SPECIES_AFTER_NO_IMPROVEMENTS, REWARD_TYPE
 import time
 from datetime import datetime
 import os
@@ -35,6 +35,7 @@ class Simulation:
             w_weight: float = W_WEIGHT,
             reward_type: str = REWARD_TYPE,
             log_folder: str = None,
+            checkpoint_folder: str = None,
             debug = False):
         
         self.pop_size = population
@@ -66,10 +67,12 @@ class Simulation:
         
         self.debug = debug
         self.log_folder = log_folder
+        self.checkpoint_folder = checkpoint_folder
         self.log_file = None
         if self.log_folder:
-            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '.v2.txt'
-            self.log_file = os.path.join(self.log_folder, timestamp)
+            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            self.log_file = os.path.join(self.log_folder, timestamp + '.v2.txt')
+            self.checkpoint_folder = os.path.join(self.checkpoint_folder, timestamp)
 
         
         # self.species structure
@@ -81,7 +84,7 @@ class Simulation:
         #     }
         # }
         self.species = {}
-
+        self.elite_ids = set()
         self.species_size: dict [int, int] = {}
         self.genomes: list [nn.NetworkGenome] = []
         self.sandboxes: list [Sandbox] = []
@@ -96,7 +99,14 @@ class Simulation:
             # if first genome, that will automatically be the progenitor 
             if i == 0:
                 # progenitor has to be deepcopy, because this genome will be modified in-place later when mutated
-                self.species[self.species_counter] = {'progenitor': deepcopy(genome.synapse_gene), 'children': [genome], 'stats': [self.current_gen, 0]}
+                progenitor = genome.synapse_gene
+
+                # don't need these connections so we can remove them
+                # will reduce footprint of self.species dict
+                for sg in progenitor:
+                    sg.outof.out_synapses = []
+            
+                self.species[self.species_counter] = {'progenitor': progenitor, 'children': [genome], 'stats': [self.current_gen, 0]}
                 genome.species = 0
                 self.species_counter += 1
             else:
@@ -113,8 +123,14 @@ class Simulation:
                         genome.species = species_num
                         break
                 if new_species:
+                    # progenitor has to be deepcopy, because this genome will be modified in-place later when mutated
+                    progenitor = genome.synapse_gene
+                    # don't need these connections so we can remove them, will reduce footprint of self.species dict
+                    for sg in progenitor:
+                        sg.outof.out_synapses = []
+
                     # print('new species')
-                    self.species[self.species_counter] = {'progenitor': deepcopy(genome.synapse_gene), 'children': [genome], 'stats': [self.current_gen, 0]}
+                    self.species[self.species_counter] = {'progenitor': progenitor, 'children': [genome], 'stats': [self.current_gen, 0]}
                     genome.species = self.species_counter
                     self.species_counter += 1
         for species_num in self.species:
@@ -124,32 +140,57 @@ class Simulation:
 
 ###############################################
         # Enable debugging with verbosity
-        gc.set_debug(gc.DEBUG_UNCOLLECTABLE)
 
         # Initialize counters for each generation
         self.deallocated_objects = {0: 0, 1: 0, 2: 0}
 
         # Callback function to tally deallocated objects
         def gc_callback(phase, info):
-            if phase == "stop":  # Only tally after GC has finished
-                gen = info['generation']
-                self.deallocated_objects[gen] += info['collected']
+            pass
+            # if phase == "stop":  # Only tally after GC has finished
+            #     gen = info['generation']
+            #     self.deallocated_objects[gen] += info['collected']
+            #     i = 0
+            #     for obj in gc.garbage:
+            #         print(obj)
+            #         i += 1
+            #         print(f"  - {repr(obj)}")
+            #         if i == 20:
+            #             break
 
-        # Attach the callback to GC events
+        # gc.set_debug(gc.DEBUG_SAVEALL)
         gc.callbacks.append(gc_callback)
 
 ################################################
 
         print(f'{POP_SIZE} NetworkGenomes created, ready for simulation')
 
+    def save_checkpoint(self):
+        if not os.path.exists(self.checkpoint_folder):
+            os.makedirs(self.checkpoint_folder)
+
+        # 1. Find the global best genome of this generation
+        # We sort by fitness to find the absolute champion
+        best_genome = max(self.genomes, key=lambda g: g.fitness)
+        
+        # 2. Construct a descriptive filename
+        # e.g., "gen_50_fit_24080.pkl"
+        filename = f"gen_{self.current_gen}_fit_{int(best_genome.fitness)}.pkl"
+        filepath = os.path.join(self.checkpoint_folder, filename)
+        
+        # 3. Save it using your existing static method
+        # print(f"Saving checkpoint: {filepath}")
+        nn.NetworkGenome.save_genome(best_genome, filepath)
+
     # @profile
     def mutate_and_speciate(self):
         now = time.time()
 
-        # TODO
-        # might be worth investigating if = [] is enough to free up memory
         # reset self.species
         for species_num in self.species:
+            for genome in self.species[species_num]['children']:
+                if id(genome) not in self.elite_ids:
+                    genome.clear()
             self.species[species_num]['children'] = []
         
         # mutate genomes
@@ -235,9 +276,11 @@ class Simulation:
                         self.species[sandbox.network.genome.species]['stats'][1] = sandbox.network.fitness
                     # print(f'Sandbox {i} finished with score of {sandbox.network.fitness}')
                     break # once a game has won, lost, or gotten stuck, break While loop, move onto new sandbox
-        
+            # clear the concrete network
+            # its never used again
+            sandbox.network.clear()
         # print(f'make next move: {(time.time() - while_start):.3f}')
-
+        self.save_checkpoint()
         total = time.time() - now
 
         # get memory info
@@ -276,6 +319,7 @@ class Simulation:
         The total adjusted fitness determines how many offsprings each species will get in the next generation
         '''
         next_gen: list [nn.NetworkGenome] = []
+        self.elite_ids = set()
 
         # check for stagnant species, and kill that species off
         current_species = list(self.species.keys())
@@ -283,6 +327,8 @@ class Simulation:
         for species_num in current_species:
             if self.species[species_num]['stats'][0] < self.current_gen - KILL_SPECIES_AFTER_NO_IMPROVEMENTS:
                 if len(self.species) >= 5: # ensure that there are at least 5 species in the population
+                    for genome in self.species[species_num]['children']:
+                        genome.clear()
                     killed += 1
                     del self.species[species_num]
                     del self.species_size[species_num]
@@ -300,6 +346,7 @@ class Simulation:
                 # set mutable to False to prevent mutation in next generation
                 self.species[species_num]['children'][0].mutable = False
                 next_gen.append(self.species[species_num]['children'][0])
+                self.elite_ids.add(id(self.species[species_num]['children'][0]))
         
         # do inter-species mating for 3% of the population
         species_list = list(self.species.keys())

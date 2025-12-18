@@ -125,12 +125,9 @@ class NeuronGene: # class for holding neuron information, but doesn't have neuro
         self.bias = bias
         self.activation_f = activation_f
         self.out_synapses: list[SynapseGene] = []
-
-        ################## not sure if this is the right approach
-        self.expressed_neuron = None # <------------------------------------------------------------------------------------
     
     def express(self):
-        self.expressed_neuron = Neuron(self.id, self.bias, self.activation_f)
+        return Neuron(self.id, self.bias, self.activation_f)
 
     def connect(self, synapse):
         self.out_synapses.append(synapse)
@@ -160,9 +157,9 @@ class SynapseGene: # class for holding neuron information, but doesn't have syna
 
         self.outof.connect(self)
 
-    def express(self):
+    def express(self, outof_neuron: Neuron, into_neuron: Neuron):
         # Synapse.__init__() automatically connects self to outof Neuron
-        return Synapse(self.id, self.outof.expressed_neuron, self.into.expressed_neuron, self.weight, self.is_on)
+        return Synapse(self.id, outof_neuron, into_neuron, self.weight, self.is_on)
 
     def __repr__(self):
         return f'[SynapseGene {self.id}] Neuron {self.outof.id} -> Neuron {self.into.id}, Weight: {self.weight}, {"Enabled" if self.is_on else "Disabled"}'
@@ -212,13 +209,9 @@ class NetworkGenome:
         self.neuron_gene = neuron_gene # excludes input and output layer genes
         self.synapse_gene = synapse_gene
 
-        self.dominant_parent = None
-        if dominant_parent is not None:
-            self.dominant_parent = dominant_parent
-            
-        self.recessive_parent = None
-        if recessive_parent is not None:
-            self.recessive_parent = recessive_parent
+        # Keep only lightweight lineage metadata to avoid retaining full parent graphs
+        self.dominant_parent_id = id(dominant_parent) if dominant_parent is not None else None
+        self.recessive_parent_id = id(recessive_parent) if recessive_parent is not None else None
         
         # these two are used in the synapse addition
         self.input_hidden_neurons = self.input_neurons + self.neuron_gene
@@ -237,6 +230,14 @@ class NetworkGenome:
         # flag that gets used in simulation stage
         # if neural network is fittest individual, this flag will be set to False, and the network will be passed to the next generation without any mutations
         self.mutable = True
+
+    # method used to remove references to unused synapse and neuron genes
+    def clear(self):
+        for neuron_gene in self.all_neuron_genes:
+            neuron_gene.out_synapses = []
+        self.neuron_ids.clear()
+        self.synapse_ids.clear()
+
 
     def find_neuron(self, id):
         if id in self.neuron_ids:
@@ -525,23 +526,14 @@ class Network:
     # @profile
     def __init__(self, genome: NetworkGenome):
         # first, express all neurons in genome
+        neuron_map = {neuron_gene.id: neuron_gene.express() for neuron_gene in genome.all_neuron_genes}
 
-        # ngs = []
-        for neuron_gene in genome.all_neuron_genes:
-            # now = time.time()
-            neuron_gene.express() # -----> this sets neuron_gene.expressed_neuron to an actual Neuron
-            # ng = time.time() - now
-            # if ng > 2:
-            #     print(f'ng.express() took {ng}, parameters: {neuron_gene.id, neuron_gene.bias}')
-            # ngs.append(str(ng))
-        # ngs = ', '.join(ngs) + '\n'
-        
-        self.input_l = Layer([n.expressed_neuron for n in genome.input_neurons])
-        self.output_l = Layer([n.expressed_neuron for n in genome.output_neurons])
+        self.input_l = Layer([neuron_map[n.id] for n in genome.input_neurons])
+        self.output_l = Layer([neuron_map[n.id] for n in genome.output_neurons])
         self.genome = genome
 
         self.fitness = 0 # used when there's conflicting genes during crossover
-        self.neurons = self.input_l.neurons + self.output_l.neurons + [n.expressed_neuron for n in genome.neuron_gene]
+        self.neurons = self.input_l.neurons + self.output_l.neurons + [neuron_map[n.id] for n in genome.neuron_gene]
 
         self.sorted_neurons = list[Neuron]
 
@@ -549,9 +541,13 @@ class Network:
         self.synapses = []
         for s in genome.synapse_gene:
             # now = time.time()
-            self.synapses.append(s.express())
+            outof_neuron = neuron_map[s.outof.id]
+            into_neuron = neuron_map[s.into.id]
+            self.synapses.append(s.express(outof_neuron, into_neuron))
             # sg = time.time() - now
             # sgs.append(str(sg))
+
+        self.top_sort()
         
         # sgs = ', '.join(sgs) + '\n'
         
@@ -562,6 +558,11 @@ class Network:
         #     log.write(ngs)
         #     log.write(sgs)
 
+    def clear(self):
+        for neuron in self.neurons:
+            neuron.out_synapses = []
+        self.synapses = []
+
     def set_input(self, inputs: list[float]): # sets the input neurons' values
         if len(inputs) != self.input_l.n_neurons:
             raise Exception(f'Input size mismatch: Expected {self.input_l.n_neurons}, got {len(inputs)}')
@@ -569,7 +570,7 @@ class Network:
             for neuron, val in zip(self.input_l.neurons, inputs):
                 neuron.value = val
 
-    def forward(self):
+    def top_sort(self):
         visited = set()
         sorted_neurons = []
 
@@ -581,14 +582,14 @@ class Network:
             visited_set.add(neuron)
             sorted_neurons.append(neuron)
 
-
         # do topological sort of synapses, and call forward
         for neuron in self.neurons: # while all neurons haven't been discovered
             if neuron not in visited:
                 dfs(visited, sorted_neurons, neuron)
 
-        self.sorted_neurons = list(reversed(sorted_neurons)) # topologically sorted neurons
+            self.sorted_neurons = list(reversed(sorted_neurons)) # topologically sorted neurons
 
+    def forward(self):
         for neuron in self.sorted_neurons:
             neuron.forward()
 
