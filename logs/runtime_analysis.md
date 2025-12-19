@@ -244,7 +244,7 @@ def gc_callback(phase, info):
 ```
 I want to see the objects that are being collected. This should give me a good idea for what objects are cluttering the gc. 
 
-## #9: The End
+## #9: Figuring out the exploding runtime issue
 So, with a little help from Cursor and Gemini, I figured out the issue causing the slow runtime. For some context, I plotted the number of Gen 2 Objects vs various other objects in my code that could feasibly accumulate (so, synapse genes, neuron genes, synapses, neurons). Here's the plot here.
 <p align="center">
   <img src="../logs/images/gcgen2.png"/>
@@ -253,3 +253,58 @@ So, what do we see? We see a linearly increasing gen 2 count, and a almost expon
 aforementioned 4 objects combined into one count. This points to maybe these objects (and maybe Networks, NetworkGenomes) not being properly 
 collected. The key idea here is "cyclic references". If you looked at my code before I implemented a fix, each Neuron/NeuronGene had a list 
 called `self.out_synapses` which held references to SynapseGenes/Synapses. Each Synapse/SynapseGene held a `self.outof` reference to a Neuron/NeuronGene. Since the neurons and synapses point to each other, this is called a circular reference. Because the reference is circular, every object always has at least 1 in-degree. The Python GC apparently uses this in-degree criteria to free stuff up, and these circular references will only be cleaned up when a gen2 collection call happens, and this operation is very slow. The idea here is to explicitly "break" these circular linkages. The way to do this is to add a function in Network and NetworkGenome called `clear()`. This goes ahead and sets lists to empty, and removes references. This allows the Python GC to efficiently garbage collect. I think we essentially had a memory leakage in PYTHON! Funny. Anyways, this issue is resolved. I just simulated 2000 generations in 38 minutes; previously it took 30 minutes for 500 generations. 
+
+## #10: Exploring other ways to speed up code
+So now, I've reached another challenge. I want to speed up the simulation speed. I have about 3 paths I can take. 1: Use multiprocessing
+to spawn seperate processes to parallelize Sandbox sims. This is pretty straightforward and I'll try this. 2: Vectorize the NNs using numpy,
+and matricies. This is hard because NEAT results in jagged network structures that are difficult to represent in matricies. It's definitely
+doable, but not my cup of tea right now. 3: Speed up Sandbox, or more specifically, speed up the game sim speed. Right now I'm using an off
+the shelf 2048 Python implementation, but this uses nested for loops to shift the numbers around. A little birdie (Gemini) gave me the idea
+of representing the board as a 64 bit integer. Each tile gets 4 bits, 0000 = empty, 0001 = 2, 0010 = 4, etc. This allows us to represent up to
+2^15, and the sweet thing about this representation is that we might be able to use bit shifting operations to speed up the tile movement! 
+This sort of connects back to what I learned this quarter in CS107; I did a bunch of bit shifting phew. So, even though approach #1 is the easiest
+and probably the gains are significant, I'm going to try #3. 
+
+But first, let's profile `Sandbox.make_next_move()` to see if the NN forward or the game is taking more time. We'll let that inform my decision.
+
+```
+Function: make_next_move at line 23
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    23                                               @profile
+    24                                               def make_next_move(self, reward_type):
+    25                                                   # perform forward pass
+    26    921687   66801623.9     72.5     36.2          self.network.forward()
+    27                                                   # softmax the output layer
+    28    921687    7020615.3      7.6      3.8          self.network.output_l.softmax()
+    29                                                   # map max activation to a movement
+    30    921687    4092350.1      4.4      2.2          max_neuron_idx = max(range(self.network.output_l.n_neurons), key=lambda i: self.network.output_l.neurons[i].get_activation())
+    31    921687     300410.2      0.3      0.2          move = Sandbox.neuron_to_move[max_neuron_idx]
+    32
+    33    921687     234513.8      0.3      0.1          if self.debug:
+    34                                                       print(self.game)
+    35    921687  101954058.7    110.6     55.3          new_game_state = self.game.do_next_move_and_track(move, self.debug)
+    36    921686     237704.8      0.3      0.1          if self.debug:
+    37                                                       print(self.game)
+    38
+    39    921686    2785679.2      3.0      1.5          if self.game.get_board() == self.previous_state:
+    40    124062     193568.7      1.6      0.1              reward = self.game.get_reward(reward_type)
+    41    124062     160571.8      1.3      0.1              self.network.set_fitness(reward)
+    42                                                       # print(self.game)
+    43    124062     111825.5      0.9      0.1              raise GameStuckException(f'Game stuck at score {reward}')
+    44    797624     220715.3      0.3      0.1          if new_game_state == 'lose':
+    45                                                       reward = self.game.get_reward(reward_type)
+    46                                                       self.network.set_fitness(reward)
+    47                                                       # print(self.game)
+    48                                                       raise GameLostException(f'Game lost at score {reward}')
+    49    797624     219513.9      0.3      0.1          elif new_game_state == 'win':
+    50                                                       self.network.set_fitness(2048)
+    51                                                       # print(self.game)
+    52                                                       raise GameWonException('Game won')
+```
+
+Ok, some cool results! It seems like the game simulation is taking the majority of the time 55%, and the forward() function is a close second at
+36%. So we can move forward with optimizing the game via bit shifting hacks. YAY!
+
+## #11: Speeding up Game Logic with bit shifting

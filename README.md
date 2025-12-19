@@ -146,6 +146,8 @@ the forward pass is done properly
 | 12/22 | Picking up where I left off. Modified 2048 code to randomly choose 2 or 4 for new number. Double checked COMBINED NUMBERS fitness function. Added logging functionality.
 | 12/23 | Trying to identify root cause of runtime spikes. Pinpointed `simulation()` runtime spikes to `nn.Network()` construction. Will investigate further. Added charts in log/ for simulation performance logging.
 | 12/24 | "Network complexity explosion" is not the culprit of simulation() runtime explosion. Need to investigate further.
+| 12/18/25 | Whole year passed since the last time I worked on this but, we fixed the runtime explosion! It was due to circular references in the Synapse and Neurons. | 
+| 12/19 | Today's work focused on improving the fitness function to enable faster convergence. Also, mutliprocessing the sandbox simulations for faster sims. | 
 
 # Attribution
 
