@@ -308,3 +308,54 @@ Ok, some cool results! It seems like the game simulation is taking the majority 
 36%. So we can move forward with optimizing the game via bit shifting hacks. YAY!
 
 ## #11: Speeding up Game Logic with bit shifting
+The general approach is as follows: utilize a 64 bit number (a long, I think) to represent the game board. Each row 16 bits, and 
+each number in a row gets 4 bits. So that's 4 bit / element * 4 numbers / row * 4 rows = 64 bits. Tada! The benefit of doing it
+this way is that we can now do the transitions using bit wise operations, which are super fast since they have a corresponding
+assembly instruction (and although I haven't looked into it specifically, presumably the Python interpreter would properly utilize
+those fast assembly calls). 
+
+So, each element gets 4 bits. So, 2^4 = 16. Huh, that's not nearly big enough to store all possible numbers in 2048. Well actually,
+we can just use the bits to store the log base 2 of the actual number. So, if we actually have 32, we store it as 0b0110. (The edge
+case is 0, which we store as 0b000. Technically 2^0 is 1, but we think it's 0 in this universe). The specific ordering of the bits is
+as follows:
+```
+board = 
+[a1 a2 a3 a4
+ b1 b2 b3 b4
+ c1 c2 c3 4c
+ d1 d2 d3 d4]
+
+equivalent bit representation =
+a1a2a3a4b1b2b3b4c1c2c3c4d1d2d3d4
+```
+
+Another nifty thing about this representation is that we can make a dictionary that maps a row to a new row, which would be the result
+of the `move_left()` operation. Conceptually, it is simply a dict that maps an integer to another integer. Since we can precompute 
+this, move left is a O(1) operation now! 
+
+How do we do `move_right()`? We can reverse the table, `move_left()`, then reverse again. How do we reverse? We can also precompute 
+a dictionary that maps a row to it's reversed row. So, again, `move_right()` is a O(1) operation.
+
+To do `move_up/down()`, we need to implement a `transpose()`. Once we transpose, it boils down to a `move_left/right()` problem.
+In the original game logic, it uses a nested for loop to naively do this. With a bit wise technique called "delta shifting", 
+we can accomplish this pretty quickly (and elengantly! it took me a while to understand though). Here's a performance comparison 
+I did just for fun.
+
+```
+# old game logic
+%%timeit
+logic.transpose(old_board)
+
+RESULT = 6.13 μs ± 262 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
+```
+
+```
+# new game logic
+%%timeit 
+transpose_fast(test_board)
+
+RESULT: 910 ns ± 31.3 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
+```
+
+6.13 / 0.9 ~ 7 times speedup! Pretty awesome. These numbers already seem small (gosh, 6.2 micro seconds?) but I think that over
+the course of the millions of moves that will be played in sim, these add up to make big differences.

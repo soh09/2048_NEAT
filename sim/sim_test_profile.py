@@ -11,15 +11,15 @@ sys.path.insert(0, parent_dir)
 
 from sim.Simulation import Simulation
 import neural_net.nn as nn
-from neural_net.visualize import visualize_genome, visualize_net, display_gene
+# from neural_net.visualize import visualize_genome, visualize_net, display_gene
 from Sandbox import Sandbox
 import random
 import gc
 
 res = []
 
-logging_path = 'C:\\Users\\hirot\Documents\\2048_NEAT\\logs\\actual_logs'
-checkpoint_path = 'C:\\Users\\hirot\Documents\\2048_NEAT\\checkpoints'
+logging_path = 'C:\\Users\\kohhi\Documents\\2048_NEAT\\logs\\actual_logs'
+checkpoint_path = 'C:\\Users\\kohhi\Documents\\2048_NEAT\\checkpoints'
 a = Simulation(log_folder = logging_path, checkpoint_folder = checkpoint_path)
 
 
@@ -28,7 +28,7 @@ a.adjust_fitness()
 a.reproduce()
 a.mutate_and_speciate()
 
-for i in range(2000):
+for i in range(500):
 
     now = time.time()
     a.simulate()
