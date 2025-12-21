@@ -18,8 +18,8 @@ import gc
 
 res = []
 
-logging_path = 'C:\\Users\\kohhi\Documents\\2048_NEAT\\logs\\actual_logs'
-checkpoint_path = 'C:\\Users\\kohhi\Documents\\2048_NEAT\\checkpoints'
+logging_path = 'C:\\Users\\hirot\Documents\\2048_NEAT\\logs\\actual_logs'
+checkpoint_path = 'C:\\Users\\hirot\Documents\\2048_NEAT\\checkpoints'
 a = Simulation(log_folder = logging_path, checkpoint_folder = checkpoint_path)
 
 
@@ -28,7 +28,7 @@ a.adjust_fitness()
 a.reproduce()
 a.mutate_and_speciate()
 
-for i in range(500):
+for i in range(200):
 
     now = time.time()
     a.simulate()

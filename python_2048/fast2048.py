@@ -2,18 +2,18 @@ import pickle
 import random
 
 try:
-    with open("2048_lut.pkl", "rb") as f:
+    with open("C:\\Users\\hirot\\Documents\\2048_NEAT\\python_2048\\2048_lut.pkl", "rb") as f:
         data = pickle.load(f)
         MOVES_LEFT = data["left"]
         MOVES_RIGHT = data["right"]
         LEFT_SCORES = data["left_score"]
         RIGHT_SCORES = data["right_score"]
-        ROW_INFO_TABLE = data["row_table_info"]
+        ROW_INFO_TABLE = data["row_info_table"]
         print("luts loaded successfully.")
 except FileNotFoundError:
     print("Error: '2048_lut.pkl' not found. Please run generate_lut.py first.")
     # Optional: You could call the generation function here as a fallback
-    exit()
+    raise(Exception)
 
 CHOICES = list(MOVES_LEFT.keys())
 

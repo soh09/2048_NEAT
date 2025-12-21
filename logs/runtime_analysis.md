@@ -275,35 +275,32 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
     23                                               @profile
     24                                               def make_next_move(self, reward_type):
     25                                                   # perform forward pass
-    26    921687   66801623.9     72.5     36.2          self.network.forward()
+    26   1833946  144078553.5     78.6     39.5          self.network.forward()
     27                                                   # softmax the output layer
-    28    921687    7020615.3      7.6      3.8          self.network.output_l.softmax()
+    28   1833946   13635409.6      7.4      3.7          self.network.output_l.softmax()
     29                                                   # map max activation to a movement
-    30    921687    4092350.1      4.4      2.2          max_neuron_idx = max(range(self.network.output_l.n_neurons), key=lambda i: self.network.output_l.neurons[i].get_activation())
-    31    921687     300410.2      0.3      0.2          move = Sandbox.neuron_to_move[max_neuron_idx]
+    30   1833946    8363096.6      4.6      2.3          max_neuron_idx = max(range(self.network.output_l.n_neurons), key=lambda i: self.network.output_l.neurons[i].get_activation())
+    31   1833946     603387.9      0.3      0.2          move = Sandbox.neuron_to_move[max_neuron_idx]
     32
-    33    921687     234513.8      0.3      0.1          if self.debug:
-    34                                                       print(self.game)
-    35    921687  101954058.7    110.6     55.3          new_game_state = self.game.do_next_move_and_track(move, self.debug)
-    36    921686     237704.8      0.3      0.1          if self.debug:
-    37                                                       print(self.game)
-    38
-    39    921686    2785679.2      3.0      1.5          if self.game.get_board() == self.previous_state:
-    40    124062     193568.7      1.6      0.1              reward = self.game.get_reward(reward_type)
-    41    124062     160571.8      1.3      0.1              self.network.set_fitness(reward)
-    42                                                       # print(self.game)
-    43    124062     111825.5      0.9      0.1              raise GameStuckException(f'Game stuck at score {reward}')
-    44    797624     220715.3      0.3      0.1          if new_game_state == 'lose':
-    45                                                       reward = self.game.get_reward(reward_type)
-    46                                                       self.network.set_fitness(reward)
-    47                                                       # print(self.game)
-    48                                                       raise GameLostException(f'Game lost at score {reward}')
-    49    797624     219513.9      0.3      0.1          elif new_game_state == 'win':
-    50                                                       self.network.set_fitness(2048)
-    51                                                       # print(self.game)
-    52                                                       raise GameWonException('Game won')
+    33
+    34   1833946  191056403.0    104.2     52.3          new_game_state = self.game.do_next_move_and_track(move, self.debug)
+    35
+    36   1833946    5671529.2      3.1      1.6          if self.game.get_board() == self.previous_state:
+    37    201000     326568.5      1.6      0.1              reward = self.game.get_reward(reward_type)
+    38    201000     273892.0      1.4      0.1              self.network.set_fitness(reward)
+    39                                                       # print(self.game)
+    40    201000     210494.3      1.0      0.1              raise GameStuckException(f'Game stuck at score {reward}')
+    41   1632946     435187.0      0.3      0.1          if new_game_state == 'lose':
+    42                                                       reward = self.game.get_reward(reward_type)
+    43                                                       self.network.set_fitness(reward)
+    44                                                       # print(self.game)
+    45                                                       raise GameLostException(f'Game lost at score {reward}')
+    46   1632946     433069.0      0.3      0.1          elif new_game_state == 'win':
+    47                                                       self.network.set_fitness(2048)
+    48                                                       # print(self.game)
+    49                                                       raise GameWonException('Game won')
 ```
-
+This is for 200 simulations.
 Ok, some cool results! It seems like the game simulation is taking the majority of the time 55%, and the forward() function is a close second at
 36%. So we can move forward with optimizing the game via bit shifting hacks. YAY!
 
@@ -359,3 +356,40 @@ RESULT: 910 ns ± 31.3 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops
 
 6.13 / 0.9 ~ 7 times speedup! Pretty awesome. These numbers already seem small (gosh, 6.2 micro seconds?) but I think that over
 the course of the millions of moves that will be played in sim, these add up to make big differences.
+
+Now, let's try running the same code but with the optimized 2048 game and see if we see speedupds.
+
+```
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    23                                               @profile
+    24                                               def make_next_move(self, reward_type):
+    25                                                   # perform forward pass
+    26   1846238  140333470.1     76.0     70.0          self.network.forward()
+    27                                                   # softmax the output layer
+    28   1846238   13491672.5      7.3      6.7          self.network.output_l.softmax()
+    29                                                   # map max activation to a movement
+    30   1846238    8105871.6      4.4      4.0          max_neuron_idx = max(range(self.network.output_l.n_neurons), key=lambda i: self.network.output_l.neurons[i].get_activation())
+    31   1846238     560233.0      0.3      0.3          move = Sandbox.neuron_to_move[max_neuron_idx]
+    32
+    33
+    34   1846238   30741696.3     16.7     15.3          new_game_state = self.game.do_next_move_and_track(move, self.debug)
+    35
+    36   1846238    5607299.8      3.0      2.8          if self.game.get_board() == self.previous_state:
+    37    201000     233126.5      1.2      0.1              reward = self.game.get_reward(reward_type)
+    38    201000     263493.4      1.3      0.1              self.network.set_fitness(reward)
+    39                                                       # print(self.game)
+    40    201000     174625.8      0.9      0.1              raise GameStuckException(f'Game stuck at score {reward}')
+    41   1645238     437229.0      0.3      0.2          if new_game_state == 'lose':
+    42                                                       reward = self.game.get_reward(reward_type)
+    43                                                       self.network.set_fitness(reward)
+    44                                                       # print(self.game)
+    45                                                       raise GameLostException(f'Game lost at score {reward}')
+    46   1645238     426800.6      0.3      0.2          elif new_game_state == 'win':
+    47                                                       self.network.set_fitness(2048)
+    48                                                       # print(self.game)
+    49                                                       raise GameWonException('Game won')
+```
+
+HELL YEA! Line 34 (where the game move is made) went from 104/per hit to 16/hit. That's a 6.5 times speedup!!! Hooray. Now
+the forward pass dominates the time consumption of this function.
