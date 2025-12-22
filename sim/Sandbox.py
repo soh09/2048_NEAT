@@ -20,7 +20,7 @@ class Sandbox:
     def set_input(self):
         # set the input
         self.network.set_input(self.game.get_board())
-    @profile
+    # @profile
     def make_next_move(self, reward_type):
         # perform forward pass
         self.network.forward()

@@ -1,12 +1,33 @@
-from Sandbox import Sandbox as Sandbox
+from sim.Sandbox import Sandbox as Sandbox
 import neural_net.nn as nn
 import random
 from math import e
 from copy import deepcopy
-from constants import POP_SIZE, SPECIATION_THRESHOLD, W_DISJOINT, W_EXCESS, W_WEIGHT, KILL_SPECIES_AFTER_NO_IMPROVEMENTS
-import multiprocessing as mp
+from sim.constants import POP_SIZE, SPECIATION_THRESHOLD, W_DISJOINT, W_EXCESS, W_WEIGHT, KILL_SPECIES_AFTER_NO_IMPROVEMENTS, REWARD_TYPE
 import time
+from datetime import datetime
+import os
+import json
+import psutil
+import gc
+import multiprocessing as mp
 
+def run_worker(genome):
+    # 1. LIGHTWEIGHT: Receive only the genome data
+    # 2. HEAVY WORK: Create objects inside the worker (Local memory)
+    net = nn.Network(genome)
+    sandbox = Sandbox(net) 
+    
+    while True:
+        try:
+            sandbox.set_input()
+            # FIX: Pass the required argument
+            sandbox.make_next_move(REWARD_TYPE)
+            sandbox.reset_update()
+        except Exception:
+            sandbox.network.clear()
+            # Return fitness when game ends
+            return sandbox.network.fitness
 
 class Simulation:
     '''
@@ -29,17 +50,49 @@ class Simulation:
             spec_thres: float = SPECIATION_THRESHOLD, 
             w_disjoint: float = W_DISJOINT, 
             w_excess: float = W_EXCESS, 
-            w_weight: float = W_WEIGHT):
+            w_weight: float = W_WEIGHT,
+            reward_type: str = REWARD_TYPE,
+            log_folder: str = None,
+            checkpoint_folder: str = None,
+            debug = False):
         
         self.pop_size = population
         self.speciation_threshold = spec_thres
         self.w_disjoint = w_disjoint
         self.w_excess = w_excess
         self.w_weight = w_weight
+        self.reward_type = reward_type
+        self.best_genome: nn.NetworkGenome = None
 
         self.species_counter = 0
         
         self.current_gen = 0
+
+        self.log = {
+            'current_gen': 0,
+            'avg_fitness': 0,
+            'max_fitness': 0,
+            'sim_time': 0,
+            'mutate_time': 0,
+            'alive_species': 0,
+            'stagnant_species': 0,
+            'species_list': [],
+            'RSS': 0,
+            'VMS': 0,
+            'gc_gen0': 0,
+            'gc_gen1': 0,
+            'gc_gen2': 0
+        }
+        
+        self.debug = debug
+        self.log_folder = log_folder
+        self.checkpoint_folder = checkpoint_folder
+        self.log_file = None
+        if self.log_folder:
+            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            self.log_file = os.path.join(self.log_folder, timestamp + '.v2.txt')
+            self.checkpoint_folder = os.path.join(self.checkpoint_folder, timestamp)
+
         
         # self.species structure
         # self.species = {
@@ -50,7 +103,7 @@ class Simulation:
         #     }
         # }
         self.species = {}
-
+        self.elite_ids = set()
         self.species_size: dict [int, int] = {}
         self.genomes: list [nn.NetworkGenome] = []
         self.sandboxes: list [Sandbox] = []
@@ -65,7 +118,14 @@ class Simulation:
             # if first genome, that will automatically be the progenitor 
             if i == 0:
                 # progenitor has to be deepcopy, because this genome will be modified in-place later when mutated
-                self.species[self.species_counter] = {'progenitor': deepcopy(genome.synapse_gene), 'children': [genome], 'stats': [self.current_gen, 0]}
+                progenitor = genome.synapse_gene
+
+                # don't need these connections so we can remove them
+                # will reduce footprint of self.species dict
+                for sg in progenitor:
+                    sg.outof.out_synapses = []
+            
+                self.species[self.species_counter] = {'progenitor': progenitor, 'children': [genome], 'stats': [self.current_gen, 0]}
                 genome.species = 0
                 self.species_counter += 1
             else:
@@ -82,22 +142,71 @@ class Simulation:
                         genome.species = species_num
                         break
                 if new_species:
+                    # progenitor has to be deepcopy, because this genome will be modified in-place later when mutated
+                    progenitor = genome.synapse_gene
+                    # don't need these connections so we can remove them, will reduce footprint of self.species dict
+                    for sg in progenitor:
+                        sg.outof.out_synapses = []
+
                     # print('new species')
-                    self.species[self.species_counter] = {'progenitor': deepcopy(genome.synapse_gene), 'children': [genome], 'stats': [self.current_gen, 0]}
+                    self.species[self.species_counter] = {'progenitor': progenitor, 'children': [genome], 'stats': [self.current_gen, 0]}
                     genome.species = self.species_counter
                     self.species_counter += 1
         for species_num in self.species:
             n = len(self.species[species_num]['children'])
             self.species_size[species_num] = n
 
-        print('1000 NetworkGenomes created, ready for simulation')
+
+###############################################
+        # Enable debugging with verbosity
+
+        # Initialize counters for each generation
+        self.deallocated_objects = {0: 0, 1: 0, 2: 0}
+
+        # Callback function to tally deallocated objects
+        def gc_callback(phase, info):
+            pass
+            # if phase == "stop":  # Only tally after GC has finished
+            #     gen = info['generation']
+            #     self.deallocated_objects[gen] += info['collected']
+            #     i = 0
+            #     for obj in gc.garbage:
+            #         print(obj)
+            #         i += 1
+            #         print(f"  - {repr(obj)}")
+            #         if i == 20:
+            #             break
+
+        # gc.set_debug(gc.DEBUG_SAVEALL)
+        gc.callbacks.append(gc_callback)
+
+################################################
+
+        print(f'{POP_SIZE} NetworkGenomes created, ready for simulation')
+
+    def save_checkpoint(self):
+        if not os.path.exists(self.checkpoint_folder):
+            os.makedirs(self.checkpoint_folder)
+        
+        # 2. Construct a descriptive filename
+        # e.g., "gen_50_fit_24080.pkl"
+        filename = f"gen_{self.current_gen}_fit_{int(self.best_genome.fitness)}.pkl"
+        filepath = os.path.join(self.checkpoint_folder, filename)
+        
+        # 3. Save it using your existing static method
+        # print(f"Saving checkpoint: {filepath}")
+        nn.NetworkGenome.save_genome(self.best_genome, filepath)
 
     # @profile
     def mutate_and_speciate(self):
+        now = time.time()
+
         # reset self.species
         for species_num in self.species:
+            for genome in self.species[species_num]['children']:
+                if id(genome) not in self.elite_ids:
+                    genome.clear()
             self.species[species_num]['children'] = []
-        now = 0
         
         # mutate genomes
         for genome in self.genomes:
@@ -111,25 +220,18 @@ class Simulation:
             new_species = True
             for species_num in self.species:
                 # print(f'checking {species_num}')
-                # start = time.time()
                 dist = nn.NetworkGenome.distance(self.species[species_num]['progenitor'], genome, self.w_disjoint, self.w_excess, self.w_weight, self.speciation_threshold)
-
                 # print(dist)
                 if dist < self.speciation_threshold: # if genome is the same species as species_num
                     new_species = False
                     self.species[species_num]['children'].append(genome)
                     genome.species = species_num
                     break
-                # now += time.time() - start
-
             if new_species:
                 # print('new species')
                 self.species[self.species_counter] = {'progenitor': deepcopy(genome.synapse_gene), 'children': [genome], 'stats': [self.current_gen, 0]}
                 genome.species = self.species_counter
                 self.species_counter += 1
-
-        
-        # print(f'mutate: {now:.2f}')
 
         # remove species_nums that have no more children (extinct species)
         current_species = list(self.species.keys())
@@ -137,42 +239,66 @@ class Simulation:
             if not self.species[species_num]['children']:
                 del self.species[species_num]
                 del self.species_size[species_num]
-    
-    # make this static because it makes the multiprocessing simpler (don't need pass in self, just genome)
-    @staticmethod
-    def simulate_single_sandbox(sandbox):
-            while True:
-                try: # try to continue playing the game 
-                    sandbox.set_input()
-                    sandbox.make_next_move()
-                    sandbox.reset_update()
-                except Exception as e:
-                    return sandbox.network.fitness
+
+        self.log['mutate_time'] = time.time() - now
+
+        self.create_log()
+
+
     # @profile
     def simulate(self):
-        self.sandboxes = [Sandbox(nn.Network(genome)) for genome in self.genomes]
+        now = time.time()
 
-        # multiprocessing
-        with mp.Pool(processes=5) as pool:
-            fitness_scores = pool.map(self.simulate_single_sandbox, self.sandboxes)
+        self.deallocated_objects = {0: 0, 1: 0, 2: 0}
 
-        for sb, fitness in zip(self.sandboxes, fitness_scores):
-            sb.network.set_fitness(fitness)
+        counts = f'{self.current_gen}, '
 
-            # potentially update the max fitness for that species
-            if sb.network.fitness > self.species[sb.network.genome.species]['stats'][1]:
-                self.species[sb.network.genome.species]['stats'][0] = self.current_gen
-                self.species[sb.network.genome.species]['stats'][1] = sb.network.fitness
+        max_fitness = 0
+        total_fitness = 0
 
-        max_fitness = max(fitness_scores)
-        avg_fitness = sum(fitness_scores) / len(fitness_scores)
+        with mp.Pool(processes=mp.cpu_count()) as pool:
+            fitness_scores = pool.map(run_worker, self.genomes)
+        
+        new_best_exists = False
+        for genome, fitness in zip(self.genomes, fitness_scores):
+            genome.fitness = fitness
 
-        for genome in self.genomes:
-            if genome.fitness == max_fitness:
-                nn.NetworkGenome.save_genome(genome, '/Users/so/Documents/projects/personal/2048_AI/sim/best_network')
+            # update generation stats
+            total_fitness += fitness
+            if fitness > max_fitness:
+                max_fitness = fitness
+            
+            # update species stats
+            if fitness > self.species[genome.species]['stats'][1]:
+                self.species[genome.species]['stats'][0] = self.current_gen
+                self.species[genome.species]['stats'][1] = fitness
 
-        print(f'(max, avg) unadjusted fitness of generation {self.current_gen} = {(max_fitness, avg_fitness)}')
-        print(f'number of species: {len(self.species)}')
+            # update simulation stats
+            if self.best_genome is None or fitness > self.best_genome.fitness:
+                new_best_exists = True
+                print('new best genome exists')
+                if self.best_genome is not None:
+                    print(f'{fitness} vs {self.best_genome.fitness}')
+                self.best_genome = deepcopy(genome)
+
+        if new_best_exists:
+            self.save_checkpoint()
+        total = time.time() - now
+
+        # get memory info
+        process = psutil.Process()
+        mem_info = process.memory_info()
+
+        print(f'(max, avg) unadjusted fitness of generation {self.current_gen} = {(max_fitness, total_fitness / POP_SIZE)}')
+        self.log['current_gen'] = self.current_gen
+        self.log['sim_time'] = total
+        self.log['max_fitness'] = max_fitness
+        self.log['avg_fitness'] = total_fitness / POP_SIZE
+        self.log['RSS'] = mem_info.rss
+        self.log['VMS'] = mem_info.vms
+        self.log['gc_gen0'] = self.deallocated_objects[0]
+        self.log['gc_gen1'] = self.deallocated_objects[1]
+        self.log['gc_gen2'] = self.deallocated_objects[2]
         self.current_gen += 1
 
     def adjust_fitness(self):
@@ -190,23 +316,28 @@ class Simulation:
                 # print(f'og fitness: {children.fitness}')
                 children.fitness /= n
                 # print(f'new fitness: {children.fitness}')
-    
     def reproduce(self):
         '''
         The total adjusted fitness determines how many offsprings each species will get in the next generation
         '''
         next_gen: list [nn.NetworkGenome] = []
+        self.elite_ids = set()
 
         # check for stagnant species, and kill that species off
         current_species = list(self.species.keys())
         killed = 0
         for species_num in current_species:
             if self.species[species_num]['stats'][0] < self.current_gen - KILL_SPECIES_AFTER_NO_IMPROVEMENTS:
-                killed += 1
-                del self.species[species_num]
-                del self.species_size[species_num]
+                if len(self.species) >= 5: # ensure that there are at least 5 species in the population
+                    for genome in self.species[species_num]['children']:
+                        genome.clear()
+                    killed += 1
+                    del self.species[species_num]
+                    del self.species_size[species_num]
 
         print(f'total # of species: {len(current_species)}, # of stagnant species: {killed}')
+
+
 
         species_fitness = {}
         for species_num in self.species:
@@ -217,9 +348,11 @@ class Simulation:
                 # set mutable to False to prevent mutation in next generation
                 self.species[species_num]['children'][0].mutable = False
                 next_gen.append(self.species[species_num]['children'][0])
+                self.elite_ids.add(id(self.species[species_num]['children'][0]))
         
         # do inter-species mating for 3% of the population
         species_list = list(self.species.keys())
+        print(species_list)
         for _ in range(int(POP_SIZE * 0.03)):
             parent1_species, parent2_species = random.choices(species_list, k = 2)
             parent1 = random.choice(self.species[parent1_species]['children'])
@@ -234,7 +367,7 @@ class Simulation:
 
         for species_num in self.species:
             species_allocation[species_num] = int(species_fitness[species_num] / total_fitness * remaining)
-        
+
         # ensure next gen has correct number of individuals
         while sum(species_allocation.values()) < remaining:
             species_allocation[random.choice(list(species_allocation.keys()))] += 1
@@ -254,6 +387,12 @@ class Simulation:
         # update self.genomes + clear self.sandboxes
         self.genomes = next_gen
         self.sandboxes = []
+
+        self.log['alive_species'] = len(current_species)
+        self.log['stagnant_species'] = killed
+        self.log['species_list'] = ', '.join([str(s) for s in species_list])
+
+
 
     @staticmethod
     def create_dense_network(input_count=16, output_count=4):
@@ -279,3 +418,12 @@ class Simulation:
         nn.NetworkGenome.NIN = input_count + output_count
         
         return network_genome
+
+    def create_log(self):
+        '''
+        information to log:
+        current_gen, avg_fitness, max_fitness, sim_time, mutate_time, 
+        '''
+        if self.log_folder:
+            with open(self.log_file, 'a') as log:
+                log.write(json.dumps(self.log) + '\n')

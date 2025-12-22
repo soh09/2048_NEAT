@@ -331,7 +331,7 @@ of the `move_left()` operation. Conceptually, it is simply a dict that maps an i
 this, move left is a O(1) operation now! 
 
 How do we do `move_right()`? We can reverse the table, `move_left()`, then reverse again. How do we reverse? We can also precompute 
-a dictionary that maps a row to it's reversed row. So, again, `move_right()` is a O(1) operation.
+a dictionary that maps a row to it's moved-right row. So, again, `move_right()` is a O(1) operation.
 
 To do `move_up/down()`, we need to implement a `transpose()`. Once we transpose, it boils down to a `move_left/right()` problem.
 In the original game logic, it uses a nested for loop to naively do this. With a bit wise technique called "delta shifting", 
@@ -357,7 +357,7 @@ RESULT: 910 ns ± 31.3 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops
 6.13 / 0.9 ~ 7 times speedup! Pretty awesome. These numbers already seem small (gosh, 6.2 micro seconds?) but I think that over
 the course of the millions of moves that will be played in sim, these add up to make big differences.
 
-Now, let's try running the same code but with the optimized 2048 game and see if we see speedupds.
+Now, let's try running the same code but with the optimized 2048 game and see if we see speed ups.
 
 ```
 Line #      Hits         Time  Per Hit   % Time  Line Contents
@@ -393,3 +393,70 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 
 HELL YEA! Line 34 (where the game move is made) went from 104/per hit to 16/hit. That's a 6.5 times speedup!!! Hooray. Now
 the forward pass dominates the time consumption of this function.
+
+## #12: Multiprocessing
+The last optimization step is to enable multiprocessing. We can spawn a pool of workers to run the simulations, and parallelize
+the entire process. This should be relatively easy. Here's an overview of the changes I made. I only needed to change `Simulation.py`.
+
+First, I add a function called `run_worker()` which takes in a genome and runs the simulation in a `Sandbox` instance.
+
+```
+def run_worker(genome):
+    # 1. LIGHTWEIGHT: Receive only the genome data
+    # 2. HEAVY WORK: Create objects inside the worker (Local memory)
+    net = nn.Network(genome)
+    sandbox = Sandbox(net) 
+    
+    while True:
+        try:
+            sandbox.set_input()
+            # FIX: Pass the required argument
+            sandbox.make_next_move(REWARD_TYPE)
+            sandbox.reset_update()
+        except Exception:
+            sandbox.network.clear()
+            # Return fitness when game ends
+            return sandbox.network.fitness
+```
+
+Since the actual simulation happens in the `run_worker()` function now, `Simulation.simulate` is now more of a orchestrator of the simulation,
+Specifically, it creates a pool of workers and maps the function and a genome to the worker. At the end of each simulation, we collect the 
+fitness as a list. We carry on with the usual `simulate()` function workload afterwards. 
+
+```
+with mp.Pool(processes=mp.cpu_count()) as pool:
+    fitness_scores = pool.map(run_worker, self.genomes)
+```
+
+It's a pretty simple modification, but the speedup is quite good. Here's a chart, comparing the total runtime of `simulate()` with and without
+multiprocesing.
+
+<p align="center">
+  <img src="../logs/images/mp-vs-nonmp.png"/>
+</p>
+
+What we see in the graph is threefold. 
+1. The runtime is much less, per simulate call, when we parallelize. 
+2. The runtime is much more smoother. Presumably, this is because a large runtime spike in a single Sandbox will not 
+affect the runtime of all subsequent simulations, since all the Sandboxes exist independently of each other. So, this
+parllel approach perhaps has the side effect of being easier to estimate runtime for. 
+3. The parallel code seems to scale much better to later generations than the serial code.
+
+All in all, the improvement we got was 1.5x speed up in total runtime. So, if it took 200 seconds to run 500 gens in the serial code, it took around 133 seconds in the parallel code. Another measurement I took is scalability. Define that as:
+
+$$
+\text{Scalability } = \frac{\text{mean(runtimes[-50:])}}{\text{mean(runtimes[:50])}}
+$$
+
+So, scalability will measure how much slower code execution got as the generations progressed (and in this case, 
+specifically, going from gen 0 to gen 450), because the neural networks (hopefully) became better at playing the game, thus taking longer to die. 
+
+| Code Type  | Scalability |
+| ----- | ------- |
+| Serial | 1.97 |
+| Parallel | 1.20 |
+
+This is a pretty huge win from a scaling perspective, because we might need to run many many generations to reach a good 
+final model.
+
+## I think that's the end of our optmization journey! Thanks.
