@@ -3,7 +3,7 @@ import neural_net.nn as nn
 import random
 from math import e
 from copy import deepcopy
-from sim.constants import POP_SIZE, SPECIATION_THRESHOLD, W_DISJOINT, W_EXCESS, W_WEIGHT, KILL_SPECIES_AFTER_NO_IMPROVEMENTS, REWARD_TYPE
+from sim.constants import POP_SIZE, SPECIATION_THRESHOLD, W_DISJOINT, W_EXCESS, W_WEIGHT, KILL_SPECIES_AFTER_NO_IMPROVEMENTS, REWARD_TYPE, SAMPLES
 import time
 from datetime import datetime
 import os
@@ -12,22 +12,32 @@ import psutil
 import gc
 import multiprocessing as mp
 
+
 def run_worker(genome):
     # 1. LIGHTWEIGHT: Receive only the genome data
     # 2. HEAVY WORK: Create objects inside the worker (Local memory)
     net = nn.Network(genome)
     sandbox = Sandbox(net) 
+
+    fitnesses = []
+    scores = []
+
+    for _ in range(SAMPLES):
     
-    while True:
-        try:
-            sandbox.set_input()
-            # FIX: Pass the required argument
-            sandbox.make_next_move(REWARD_TYPE)
-            sandbox.reset_update()
-        except Exception:
-            sandbox.network.clear()
-            # Return fitness when game ends
-            return sandbox.network.fitness
+        while True:
+            try:
+                sandbox.set_input()
+                # FIX: Pass the required argument
+                sandbox.make_next_move()
+                sandbox.reset_update()
+            except Exception:
+                sandbox.network.clear()
+                # Return fitness when game ends
+                fitnesses.append(sandbox.network.fitness)
+                scores.append(sandbox.game.score)
+                sandbox.factory_reset()
+                break
+    return min(fitnesses), sum(scores) / SAMPLES
 
 class Simulation:
     '''
@@ -84,13 +94,15 @@ class Simulation:
             'gc_gen2': 0
         }
         
+        self.cpu_count = mp.cpu_count()
+
         self.debug = debug
         self.log_folder = log_folder
         self.checkpoint_folder = checkpoint_folder
         self.log_file = None
         if self.log_folder:
             timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            self.log_file = os.path.join(self.log_folder, timestamp + '.v2.txt')
+            self.log_file = os.path.join(self.log_folder, timestamp + '.v3.txt')
             self.checkpoint_folder = os.path.join(self.checkpoint_folder, timestamp)
 
         
@@ -112,7 +124,6 @@ class Simulation:
         for i in range(population):
             # print('~~checking new genome~~')
             genome = Simulation.create_dense_network()
-            # net = nn.Network(genome)
             self.genomes.append(genome)
 
             # if first genome, that will automatically be the progenitor 
@@ -156,33 +167,11 @@ class Simulation:
             n = len(self.species[species_num]['children'])
             self.species_size[species_num] = n
 
-
-###############################################
-        # Enable debugging with verbosity
-
-        # Initialize counters for each generation
-        self.deallocated_objects = {0: 0, 1: 0, 2: 0}
-
-        # Callback function to tally deallocated objects
-        def gc_callback(phase, info):
-            pass
-            # if phase == "stop":  # Only tally after GC has finished
-            #     gen = info['generation']
-            #     self.deallocated_objects[gen] += info['collected']
-            #     i = 0
-            #     for obj in gc.garbage:
-            #         print(obj)
-            #         i += 1
-            #         print(f"  - {repr(obj)}")
-            #         if i == 20:
-            #             break
-
-        # gc.set_debug(gc.DEBUG_SAVEALL)
-        gc.callbacks.append(gc_callback)
-
-################################################
-
         print(f'{POP_SIZE} NetworkGenomes created, ready for simulation')
+        print(f'Reward function: {REWARD_TYPE}')
+        print(f'Averaging over {SAMPLES} runs per Sandbox')
+        print(f'Multiprocessing with {self.cpu_count} cpu cores')
+        print(f'Speciation threshold at: {SPECIATION_THRESHOLD}')
 
     def save_checkpoint(self):
         if not os.path.exists(self.checkpoint_folder):
@@ -249,24 +238,35 @@ class Simulation:
     def simulate(self):
         now = time.time()
 
-        self.deallocated_objects = {0: 0, 1: 0, 2: 0}
+        # self.deallocated_objects = {0: 0, 1: 0, 2: 0}
 
         counts = f'{self.current_gen}, '
 
         max_fitness = 0
         total_fitness = 0
 
-        with mp.Pool(processes=mp.cpu_count()) as pool:
-            fitness_scores = pool.map(run_worker, self.genomes)
+        max_score = 0
+        total_score = 0
+
+        chunk_size = max(1, len(self.genomes) // self.cpu_count)
+
+        with mp.Pool(processes=self.cpu_count) as pool:
+            outputs = pool.map(run_worker, self.genomes, chunksize=chunk_size)
         
         new_best_exists = False
-        for genome, fitness in zip(self.genomes, fitness_scores):
+        for genome, output in zip(self.genomes, outputs):
+            fitness, score = output[0], output[1]
             genome.fitness = fitness
 
             # update generation stats
             total_fitness += fitness
             if fitness > max_fitness:
                 max_fitness = fitness
+
+            # update generation stats
+            total_score += score
+            if score > max_score:
+                max_score = score
             
             # update species stats
             if fitness > self.species[genome.species]['stats'][1]:
@@ -276,9 +276,6 @@ class Simulation:
             # update simulation stats
             if self.best_genome is None or fitness > self.best_genome.fitness:
                 new_best_exists = True
-                print('new best genome exists')
-                if self.best_genome is not None:
-                    print(f'{fitness} vs {self.best_genome.fitness}')
                 self.best_genome = deepcopy(genome)
 
         if new_best_exists:
@@ -289,16 +286,29 @@ class Simulation:
         process = psutil.Process()
         mem_info = process.memory_info()
 
-        print(f'(max, avg) unadjusted fitness of generation {self.current_gen} = {(max_fitness, total_fitness / POP_SIZE)}')
+        avg_fitness = total_fitness / POP_SIZE
+        avg_score = total_score / POP_SIZE
+
+        print("-" * 55)
+        print(f" GENERATION {self.current_gen} SUMMARY")
+        print("-" * 55)
+        print(f"{'Metric':<20} | {'Max':>12} | {'Average':>12}")
+        print("-" * 55)
+        print(f"{'Unadjusted Fitness':<20} | {max_fitness:>12.4f} | {avg_fitness:>12.4f}")
+        print(f"{'Score':<20} | {max_score:>12.4f} | {avg_score:>12.4f}")
+        print("-" * 55)
+
         self.log['current_gen'] = self.current_gen
         self.log['sim_time'] = total
         self.log['max_fitness'] = max_fitness
         self.log['avg_fitness'] = total_fitness / POP_SIZE
+        self.log['max_score'] = max_score
+        self.log['avg_score'] = total_score / POP_SIZE
         self.log['RSS'] = mem_info.rss
         self.log['VMS'] = mem_info.vms
-        self.log['gc_gen0'] = self.deallocated_objects[0]
-        self.log['gc_gen1'] = self.deallocated_objects[1]
-        self.log['gc_gen2'] = self.deallocated_objects[2]
+        # self.log['gc_gen0'] = self.deallocated_objects[0]
+        # self.log['gc_gen1'] = self.deallocated_objects[1]
+        # self.log['gc_gen2'] = self.deallocated_objects[2]
         self.current_gen += 1
 
     def adjust_fitness(self):
@@ -335,7 +345,6 @@ class Simulation:
                     del self.species[species_num]
                     del self.species_size[species_num]
 
-        print(f'total # of species: {len(current_species)}, # of stagnant species: {killed}')
 
 
 
@@ -352,7 +361,20 @@ class Simulation:
         
         # do inter-species mating for 3% of the population
         species_list = list(self.species.keys())
-        print(species_list)
+
+        W = 55 
+
+        # We calculate padding dynamically to fit the smaller width
+        # The -2 accounts for the border lines
+        col_1_width = (W // 2) - 1 
+        col_2_width = W - (W // 2) - 3
+
+        print(f" Total Species: {len(current_species):<{col_1_width - 15}} │ Stagnant: {killed:<{col_2_width - 11}}")
+
+        print("-" + "-" * (W - 2) + "-")
+        print(f"  List: {str(species_list):<{W - 10}} ")
+        print("-" + "-" * (W - 2) + "-")
+
         for _ in range(int(POP_SIZE * 0.03)):
             parent1_species, parent2_species = random.choices(species_list, k = 2)
             parent1 = random.choice(self.species[parent1_species]['children'])
@@ -401,7 +423,7 @@ class Simulation:
         The input is densely connected to the output. Each of the synapse weights and neuron biases are randomly chosen.
         """
         # Create input and output neurons
-        input_neurons = [nn.NeuronGene(i, random.random()) for i in range(0, input_count)]
+        input_neurons = [nn.NeuronGene(i, random.uniform(-1, 1)) for i in range(0, input_count)]
         output_neurons = [nn.NeuronGene(j + input_count, random.uniform(-1, 1)) for j in range(output_count)]
         
         # Create all possible synapse connections between input and output neurons
@@ -414,8 +436,6 @@ class Simulation:
                 
         # Create the NetworkGenome
         network_genome = nn.NetworkGenome(input_neurons, output_neurons, [], synapse_gene)
-        nn.NetworkGenome.SIN = SIN
-        nn.NetworkGenome.NIN = input_count + output_count
         
         return network_genome
 

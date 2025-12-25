@@ -4,9 +4,39 @@ from .LSD import LSD
 import pickle
 import time
 
-from sim.constants import NEURON_ADD_CHANCE, SYNAPSE_WEIGHT_CHANGE_CHANCE, SYNAPSE_ADD_CHANCE, SYNAPSE_SWITCH_CHANCE
+from sim.constants import NEURON_ADD_CHANCE, SYNAPSE_WEIGHT_CHANGE_CHANCE, SYNAPSE_ADD_CHANCE, SYNAPSE_SWITCH_CHANCE, SYNAPSE_WEIGHT_PERTERB_CHANCE
 
-# Implements Neurons, Synapses, Layer, and Network
+# Implements Neuron, NeuronGene, Synapse, SynapseGene, Layer, Network, NetworkGenome, InnovationTracker
+
+
+# utility class that keeps track of innovation numbers
+# hands out new ids when there is truly novel structure
+class InnovationTracker():
+    neuron_tracker = {}
+    synapse_tracker = {}
+    SIN = 63
+    NIN = 19
+
+    @staticmethod
+    def get_synapse_id(outof, into):
+        # checks synapse tracker dict to see if we have a hit
+        if (outof, into) in InnovationTracker.synapse_tracker:
+            return InnovationTracker.synapse_tracker[(outof, into)]
+        else:
+            InnovationTracker.SIN += 1
+            InnovationTracker.synapse_tracker[(outof, into)] = InnovationTracker.SIN
+            return InnovationTracker.SIN
+    
+    
+    @staticmethod
+    def get_neuron_id(outof, into):
+        # checks synapse tracker dict to see if we have a hit
+        if (outof, into) in InnovationTracker.neuron_tracker:
+            return InnovationTracker.neuron_tracker[(outof, into)]
+        else:
+            InnovationTracker.NIN += 1
+            InnovationTracker.neuron_tracker[(outof, into)] = InnovationTracker.NIN
+            return InnovationTracker.NIN
 
 # the Neuron class
 class Neuron:
@@ -117,6 +147,8 @@ class Layer:
         bottom = sum(math.exp(neuron.get_activation()) for neuron in self.neurons)
         for neuron in self.neurons:
             neuron.value = math.exp(neuron.value) / bottom
+    def __repr__(self):
+        return ", ".join(str(round(n.get_activation(), 3)) for n in self.neurons)
 
 
 class NeuronGene: # class for holding neuron information, but doesn't have neuron functionality
@@ -198,16 +230,13 @@ class SynapseGene: # class for holding neuron information, but doesn't have syna
 # This class holds all the genetic information of a network
 # Such as information about deactivated synapses, all neurons, and all synapses
 class NetworkGenome:
-    # class attribute are accessible to read and update from all instances of NetworkGenome
-    NIN = 0
-    SIN = 0
-
     def __init__(self, input_neurons: list[NeuronGene], output_neurons: list[NeuronGene], neuron_gene: list[NeuronGene], synapse_gene: list[SynapseGene], dominant_parent: 'NetworkGenome' = None, recessive_parent: 'NetworkGenome' = None):
         self.input_neurons = input_neurons
         self.output_neurons = output_neurons
 
         self.neuron_gene = neuron_gene # excludes input and output layer genes
         self.synapse_gene = synapse_gene
+        self.enabled_synapses = [s for s in self.synapse_gene if s.is_on]
 
         # Keep only lightweight lineage metadata to avoid retaining full parent graphs
         self.dominant_parent_id = id(dominant_parent) if dominant_parent is not None else None
@@ -223,6 +252,7 @@ class NetworkGenome:
         self.synapse_ids = {s.id: s for s in self.synapse_gene}
 
         self.fitness = 0
+        self.temp_fitness = 0 # never touched, besides in test_genome.py
 
         # will be used to mark species #
         self.species = None
@@ -283,42 +313,52 @@ class NetworkGenome:
             #     print(f'[synapse en/disable mutation] @ sg {sg.id}')
             #     sg.is_on = not sg.is_on
             if synapse_weight_change:
-                new_weight = random.uniform(0, 1)
-                # print(f'[synapse weight change mutation] @ sg {sg.id} ({sg.weight:.2f} -> {new_weight:.2f})')
-                sg.weight = new_weight
+                if random.random() <= SYNAPSE_WEIGHT_PERTERB_CHANCE:
+                    new_weight = sg.weight + random.gauss(0, 0.5)
+                    # print(f'[synapse weight change mutation] @ sg {sg.id} ({sg.weight:.2f} -> {new_weight:.2f})')
+                    sg.weight = new_weight
+                else:
+                    sg.weight = random.uniform(-1, 1)
             
             if not synapse_weight_change:
                 synapse_switch = random.random() <= SYNAPSE_SWITCH_CHANCE
                 if synapse_switch:
-                    sg.is_on = not sg.is_on
+                    if sg.is_on:
+                        sg.is_on = False
+                        self.enabled_synapses.remove(sg)
+                    else:
+                        sg.is_on = True
+                        self.enabled_synapses.append(sg)
 
 
         # neuron add
-        # done by disabling an existing synapse, adding two new synapses, with a neuron in between
+        # done by disabling an existing ENABLED synapse, adding two new synapses, with a neuron in between
         neuron_add = random.random() <= NEURON_ADD_CHANCE
 
         if neuron_add:
             # pick a synapse at random
-            to_disable = random.choice(self.synapse_gene)
+            to_disable = random.choice(self.enabled_synapses)
             # disable it
             to_disable.is_on = False
+            self.enabled_synapses.remove(to_disable)
             # make a new neuron
-            # print('generating random bias')
-            new_neuron = NeuronGene(NetworkGenome.NIN, random.uniform(-1, 1)) # <----- need mechanism to keep track of IDs
-            # print(f'[neuron addition mutation] [Neuron {NetworkGenome.NIN}] @ sg {to_disable.id}, bias = {new_neuron.bias}')
-            NetworkGenome.NIN += 1
-            self.update_neuron_lists(new_neuron)
+            neuron_id = InnovationTracker.get_neuron_id(to_disable.outof.id, to_disable.into.id)
 
-            # create two new synapses, and connect the new neuron with it
-            # print(f'to_disable.outof: {to_disable.outof}')
-            # print(f'to_disable.into: {to_disable.into}')
-            new_synapse_into = SynapseGene(NetworkGenome.SIN, to_disable.outof, new_neuron, 1, True)
-            NetworkGenome.SIN += 1
-            new_synapse_outof = SynapseGene(NetworkGenome.SIN, new_neuron, to_disable.into, to_disable.weight, True)
-            NetworkGenome.SIN += 1
+            if neuron_id not in self.neuron_ids:
+                new_neuron = NeuronGene(neuron_id, random.uniform(-1, 1)) # <----- need mechanism to keep track of IDs
+                # print(f'[neuron addition mutation] [Neuron {neuron_id}] @ sg {to_disable.id}, bias = {new_neuron.bias}')
+                self.update_neuron_lists(new_neuron)
 
-            self.update_synapse_lists(new_synapse_into)
-            self.update_synapse_lists(new_synapse_outof)
+                # create two new synapses, and connect the new neuron with it
+                # print(f'to_disable.outof: {to_disable.outof}')
+                # print(f'to_disable.into: {to_disable.into}')
+                into_synapse_id = InnovationTracker.get_synapse_id(to_disable.outof.id, neuron_id)
+                outof_synapse_id = InnovationTracker.get_synapse_id(neuron_id, to_disable.into.id)
+                new_synapse_into = SynapseGene(into_synapse_id, to_disable.outof, new_neuron, 1, True)
+                new_synapse_outof = SynapseGene(outof_synapse_id, new_neuron, to_disable.into, to_disable.weight, True)
+
+                self.update_synapse_lists(new_synapse_into)
+                self.update_synapse_lists(new_synapse_outof)
 
         # synapse add
         # must ensure new synapse does not make a loop
@@ -341,7 +381,7 @@ class NetworkGenome:
             # print(outof_candidates)
             
             allowed_neurons = set()
-            outof_neuron = None
+            outof_neuron: NeuronGene = None
             while True: # until a valid new connection is found
                 if len(hidden_outof_candidates) + len(input_outof_candidates) == 0: # if there are no more source neuron candidates, give up adding a synapse
                     break
@@ -372,10 +412,10 @@ class NetworkGenome:
                 
                 if allowed_neurons:
                     into_neuron = random.choice(list(allowed_neurons))
-                    new_synapse = SynapseGene(NetworkGenome.SIN, outof_neuron, into_neuron, random.uniform(-1, 1), True)
-                    NetworkGenome.SIN += 1
+                    new_synapse_id = InnovationTracker.get_synapse_id(outof_neuron.id, into_neuron.id)
+                    new_synapse = SynapseGene(new_synapse_id, outof_neuron, into_neuron, random.uniform(-1, 1), True)
                     self.update_synapse_lists(new_synapse)
-                    # print(f'[synapse addition mutation] {new_synapse}')
+                    # print(f'[synapse addition mutation] {new_synapse}, {outof_neuron.id} -> {into_neuron.id}')
                     break
                 
                 attempts -= 1
@@ -395,6 +435,7 @@ class NetworkGenome:
     # same utility function
     def update_synapse_lists(self, new_synapse: SynapseGene):
         self.synapse_gene.append(new_synapse)
+        self.enabled_synapses.append(new_synapse)
 
         self.synapse_ids[new_synapse.id] = new_synapse
 
@@ -455,6 +496,7 @@ class NetworkGenome:
 
         # need to manually run this to ensure child genome has synapse_gene dict
         child.synapse_ids = {s.id: s for s in child.synapse_gene}
+        child.enabled_synapses = [s for s in child.synapse_gene if s.is_on]
 
         return child
 
@@ -498,8 +540,11 @@ class NetworkGenome:
                 else:
                     excess += 1
         
-
-        delta = disjoint * w_disjoint + excess * w_excess + w_bar * w_weight
+        N = max(len(net1_sg), len(net2.synapse_gene))
+        if N < 20: 
+            N = 1.0
+        # delta = disjoint * w_disjoint + excess * w_excess + w_bar * w_weight
+        delta = (disjoint * w_disjoint) / N + (excess * w_excess) / N + w_bar * w_weight
         
         return delta
     
@@ -613,3 +658,4 @@ class Network:
 
     def play_game(self):
         pass
+

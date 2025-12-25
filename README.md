@@ -68,7 +68,7 @@ be insightful for me.
             - synapse weight change 
     - [x] implement some sort of species differentiating algorithm
     - [x] implement logic for evolving networks
-        - [ ] when to "kill" certain underperforming species
+        - [x] when to "kill" certain underperforming species -> have culling logic implemented, uses KILL_SPECIES_AFTER_NO_IMPROVEMENTS constant 
         - [ ] probabilities for sexual reproduction, asexual reproduction, etc
 
 3. Simulation of Generations and Populations
@@ -76,12 +76,12 @@ be insightful for me.
 
 4. Optimization
     - [x] enable multiprocessing for parallel simulation
-    - [ ] optimize nn.NetworkGenome.distance() 
+    - [x] optimize nn.NetworkGenome.distance() 
         - [x] optimized the difference calculation by removing unnecessary set creation, adding early stopping
 
 ### To Do
 - [ ] think about neuron and synapse cross over probabilities (dominant vs recessive)
-- [ ] add a nice visual for the structure of the classes, methods, and attributes
+- [x] add a nice visual for the structure of the classes, methods, and attributes
 - [ ] add nicer comments
 - [x] fix bug where there is duplicate synapses sometimes. figure out where it comes from
 - [x] think about how to have a global counter variable for innovation number
@@ -102,6 +102,9 @@ the forward pass is done properly
 - This is the first time I'm having to actually profile my code to determine which lines are taking up precious runtime. It's been pretty interesting.
 - I'm using the kernprof tool, which allows me to profile the performance of each line
     - \# of hits, and total time it took that run that line
+- Check logs/runtime_analysis.md for details, but reduced runtime by a factor of 10n
+- Completely rewrote 2048 implementation using a single 64 bit integer to represent the board, and bitwise operations for game transitions
+
 #### Optimizing NetworkGenome.distance()
 - I'm trying various things like
     - early stopping (if the speciation threshold is met at certain points in the code, return, instead of continuing to the end)
@@ -147,7 +150,9 @@ the forward pass is done properly
 | 12/23 | Trying to identify root cause of runtime spikes. Pinpointed `simulation()` runtime spikes to `nn.Network()` construction. Will investigate further. Added charts in log/ for simulation performance logging.
 | 12/24 | "Network complexity explosion" is not the culprit of simulation() runtime explosion. Need to investigate further.
 | 12/18/25 | Whole year passed since the last time I worked on this but, we fixed the runtime explosion! It was due to circular references in the Synapse and Neurons. | 
-| 12/19 | Today's work focused on improving the fitness function to enable faster convergence. Also, mutliprocessing the sandbox simulations for faster sims. | 
+| 12/19 | Today's work focused on improving the fitness function to enable faster convergence. Also, mutliprocessing the sandbox simulations for faster sims. |
+| 12/20-23| Made major changes to code, especially with the innovation logic. Experimented with different reward functions, like empty tile heuristics and illegal move penalties. | 
+| 12/24 |   TBD |
 
 # Attribution
 

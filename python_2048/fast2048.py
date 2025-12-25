@@ -9,6 +9,8 @@ try:
         LEFT_SCORES = data["left_score"]
         RIGHT_SCORES = data["right_score"]
         ROW_INFO_TABLE = data["row_info_table"]
+        RIGHT_COMBINED_SCORE = data['right_combined_tiles']
+        LEFT_COMBINED_SCORE = data['left_combined_tiles']
         print("luts loaded successfully.")
 except FileNotFoundError:
     print("Error: '2048_lut.pkl' not found. Please run generate_lut.py first.")
@@ -123,7 +125,8 @@ def move_left(num):
     res |= MOVES_LEFT[d]
 
     score = LEFT_SCORES[a] + LEFT_SCORES[b] + LEFT_SCORES[c] + LEFT_SCORES[d]
-    return res, score
+    combined = LEFT_COMBINED_SCORE[a] + LEFT_COMBINED_SCORE[b] + LEFT_COMBINED_SCORE[c] + LEFT_COMBINED_SCORE[d]
+    return res, score, combined
 
 
 # move right -> reverse, then look up table
@@ -141,20 +144,22 @@ def move_right(num):
     res |= MOVES_RIGHT[d]
 
     score = RIGHT_SCORES[a] + RIGHT_SCORES[b] + RIGHT_SCORES[c] + RIGHT_SCORES[d]
-    return res, score
+    combined = RIGHT_COMBINED_SCORE[a] + RIGHT_COMBINED_SCORE[b] + RIGHT_COMBINED_SCORE[c] + RIGHT_COMBINED_SCORE[d]
+    
+    return res, score, combined
 
 
 def move_up(num):
     num = transpose(num)
-    num, score = move_left(num)
+    num, score, combined = move_left(num)
     num = transpose(num)
-    return num, score
+    return num, score, combined
 
 def move_down(num):
     num = transpose(num)
-    num, score = move_right(num)
+    num, score, combined = move_right(num)
     num = transpose(num)
-    return num, score
+    return num, score, combined
 
 
 def new_game():
@@ -226,10 +231,13 @@ MOVE_DICT = {
 }
 
 class Game:
-    def __init__(self):
+    def __init__(self, reward_type):
         self.board = new_game()
+        self.reward_type = reward_type
         self.filled_in = 2
-        self.combined = 1
+        self.score = 1
+        self.tiles_combined = 0
+        self.heauristic_bonus = 0
         # self.max = 0
 
     def get_max_item(self): # this is the fitness of the neural net
@@ -237,15 +245,24 @@ class Game:
 
         # keep track of max score (return of move), this makes tracking this easy
 
-    def get_numbers_combined(self):
-        return self.combined
+    def get_score(self):
+        return self.score
     
-    def get_reward(self, reward_type):
-        if reward_type == 'MAX VALUE':
+    def get_tiles_combined(self):
+        return self.tiles_combined
+    
+    def get_reward(self):
+        if self.reward_type == 'MAX VALUE':
             return self.get_max_item()
         
-        if reward_type == 'COMBINED NUMBERS':
-            return self.combined
+        if self.reward_type == 'SCORE':
+            return self.score
+
+        if self.reward_type == 'TILES COMBINED':
+            return self.tiles_combined
+        
+        if self.reward_type == 'SCORE + EMPTY TILES BONUS':
+            return self.score + self.heauristic_bonus
     
     def get_board(self):
         return [
@@ -264,12 +281,23 @@ class Game:
     def do_next_move_and_track(self, move: str, debug = False):
         if debug:
             int_to_board(self.board)
-        new_board, score = MOVE_DICT[move](self.board)
+
+        new_board, score, tiles_combined = MOVE_DICT[move](self.board)
+
+        if new_board == self.board:
+            return 'board unchanged'
+
         if debug:
             int_to_board(new_board)
 
-        self.combined += score
-        # self.filled_in = new_filled_in
+        self.tiles_combined += tiles_combined
+        self.score += score
+
+        if self.reward_type == 'SCORE + EMPTY TILES BONUS':
+            self.heauristic_bonus += self.empty_tile_count() * 0.1
+
+        # if we experiment with other types of per move bonues, update self.heuristic bonus to hold that bonus
+
         self.board = new_board
 
         state = get_game_state(self.board)
@@ -281,6 +309,8 @@ class Game:
         self.board = generate_next(self.board)
         # self.filled_in += 1 # generate_next() always adds one number to the board
 
+    def empty_tile_count(self):
+        return self.get_board().count(0)
 
     def __repr__(self):
         rows_ints = get_rows(self.board)
@@ -316,6 +346,6 @@ class Game:
         
         return "\n".join(output)
 
-        
-
+    def reset(self):
+        self.__init__(self.reward_type)
 
