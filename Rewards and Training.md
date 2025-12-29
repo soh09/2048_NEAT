@@ -260,11 +260,84 @@ cautiously optimistic, but here we go.
   <img src="logs/images/after_bug_fixes.png" />
 </p>
 
-So yea, didn't work. I lowered the speciation threshold so the species has a curious pattern but I doubt that that was the issue. I think there's something wrong still. I do know that the progenitor logic is different in mine vs the neat-python
-library. In mine, the progenitor never changes (I thought this made sense), so unless species 0 stagnates, the species 0 progenitor will always be from the first gen. In neat=python, they pick a random speciment from the species and make
-that the next progenitor, so that way the species "mean" or "center" is always shifting.
-Maybe I will implement that. There's also first-fit and best-fit criteria for speciation (like, do I put network A in the first species that the distance is less than the speciation threshold, or do I check against all the species and put it
+So yea, didn't work. I lowered the speciation threshold so the species has a curious pattern but I doubt that that was the issue. I think there's something
+wrong still. I do know that the progenitor logic is different in mine vs the neat-python library. In mine, the progenitor never changes (I thought this made sense), 
+so unless species 0 stagnates, the species 0 progenitor will always be from the first gen. In neat=python, they pick a random speciment from the species and make
+that the next progenitor, so that way the species "mean" or "center" is always shifting. Maybe I will implement that. There's also first-fit and best-fit criteria 
+for speciation (like, do I put network A in the first species that the distance is less than the speciation threshold, or do I check against all the species and put it
 in the most compatible one). I might experiment with that, but after I change the progenitor logic.
+
+Ok, so here are some bugs that I fixed in my code.
+### progenitor in the Simulation.species dict needs to be a deepcopy (this one might be big)
+### the intent penalty accumulation logic is too harsh
+Let me explain this one a bit more. So we had a good idea, to penalize the model for making illegal (useless) moves, like moving right when it wouldn't make a change. 
+However, the way we did it might have been too harsh. Consider an example.
+
+The model plays 100 valid moves. It also did 200 invalid moves. At the end, the model gets to 2048, and lets say the score was 6000. 
+The fitness of this model would be $6000 * 0.99^200 = 6000 * 0.134 = 804$.
+
+Now, let's say the model plays 400 valid moves, 200 invalid moves. At the end, the model gets to 2048, and lets say the score was 6000. 
+Again, the fitness of this model would be $6000 * 0.99^200 = 6000 * 0.134 = 804$.
+
+In our goal to punish models that made wrong moves, we forgot that it's "badness" to how many invalid moves a model can make. The first 
+model has a 33% accuracy with moves, while the second model has 66%. Intuition should tell us that these two models should not be punished the same, but my method does.
+So, we introduce the notion of move accuracy. Define as 
+
+$$
+\text{move accuracy } = \frac{\text{valid moves}}{\text{valid moves + invalid moves}}
+$$
+
+At the end of game play, we mulitply the fitness by this number to scale it by how accurate the model was. So,
+we've added this line in the `Sandbox.make_next_move_and_track()` function.
+```py
+reward = self.game.get_reward() * (self.valid_moves / (self.invalid_moves + self.valid_moves))
+```
+#### Minor change: going back to fitness based on average of gameplays, not minimum. min is too harsh
+
+### `Simulation.reproduce()` Issue with Parent Selection Method
+I use a method called roulette wheel selection to select two parents within a species.
+```py
+for species_num in species_allocation:
+    # create an offspring by crossing over within this species
+    # use ~~roulette wheel selection~~ rank based
+    species_n = self.species_size[species_num]
+    # print(f'species #{species_num}, popsize = {species_n}, allocation = {species_allocation[species_num]}')
+    proportional_prob = [e**(rank / species_n) for rank in range(species_n, 0, -1)]
+    # print(f'probabilities: {proportional_prob}')
+    # print(f'fitnesses: {[n.fitness for n in self.species[species_num]['children']]}')
+    for _ in range(species_allocation[species_num]):
+        parent1, parent2 = random.choices(self.species[species_num]['children'], weights = proportional_prob, k = 2)
+        offspring = nn.NetworkGenome.from_crossover(parent1, parent2)
+```
+
+The proportional probability calculation looks fine on first glance. But, it might be flawed. Let's assume we had 200 individuals in 
+this species. The proportion that gets assigned to the most fit invididual is $e^(200/200) = 2.718$, and for the worst individual its
+$e^(1/200) = 1.005$. There is only about a 2 times higher chance that the most fit individual gets selected, despite it being ranked 199 
+places higher. This might be too random, so we're going to weigh the ranking more heavily to create proportions.
+
+So instead, we will try tournament style selection, where we randomly select 3 individuals, then select the highest fitness individual.
+```
+tournament1 = random.choices(self.species[species_num]['children'], k=3)
+parent1 = max(tournament1, key = lambda g: g.fitness)
+```
+
+You can see how the probability distribuition changed from roulette wheel selection to tournament selection. 
+
+<p align="center">
+  <img src="logs/images/selection_probability.png" />
+</p>
+
+Ok, now at this point, I tried training. Drum roll...
+
+<p align="center">
+  <img src="logs/images/FIRST_SIGN.png" />
+</p>
+
+OMG! THE TREND! THERE'S A TREND!!! CAN'T SAY THAT ABOUT PREVIOUS RUNS!!! 
+So I think we might need to address the fact that there are too many species, but I think the algorithm is FINALLY partialy
+working?? I changed the speciation threshold to 0.9 (0.7 prev), let's see how that changes things.
+
+- change progenitor at each generation
 
 I'm not even going to bother putting the training results here but it didn't work. I'm really stuck, so I went on google to see if anyone had made a blog post,
 youtube video, etc about applying NEAT to 2048. I found this [repo](https://github.com/qw/2048-neat?tab=readme-ov-file) that does exactly what I'm trying to do,

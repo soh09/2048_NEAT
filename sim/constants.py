@@ -16,7 +16,7 @@ W_WEIGHT = 0.3
 # simulation parameters
 POP_SIZE = 1000
 # N_GENS = 100
-SPECIATION_THRESHOLD = 0.7
+SPECIATION_THRESHOLD = 0.75
 KILL_SPECIES_AFTER_NO_IMPROVEMENTS = 15 # kill species that don't make an improvement after this many generations
 SAMPLES = 5
 

@@ -37,7 +37,7 @@ def run_worker(genome):
                 scores.append(sandbox.game.score)
                 sandbox.factory_reset()
                 break
-    return min(fitnesses), sum(scores) / SAMPLES
+    return sum(fitnesses) / SAMPLES, sum(scores) / SAMPLES
 
 class Simulation:
     '''
@@ -129,7 +129,7 @@ class Simulation:
             # if first genome, that will automatically be the progenitor 
             if i == 0:
                 # progenitor has to be deepcopy, because this genome will be modified in-place later when mutated
-                progenitor = genome.synapse_gene
+                progenitor = deepcopy(genome.synapse_gene)
 
                 # don't need these connections so we can remove them
                 # will reduce footprint of self.species dict
@@ -154,7 +154,7 @@ class Simulation:
                         break
                 if new_species:
                     # progenitor has to be deepcopy, because this genome will be modified in-place later when mutated
-                    progenitor = genome.synapse_gene
+                    progenitor = deepcopy(genome.synapse_gene)
                     # don't need these connections so we can remove them, will reduce footprint of self.species dict
                     for sg in progenitor:
                         sg.outof.out_synapses = []
@@ -363,7 +363,6 @@ class Simulation:
         species_list = list(self.species.keys())
 
         W = 55 
-
         # We calculate padding dynamically to fit the smaller width
         # The -2 accounts for the border lines
         col_1_width = (W // 2) - 1 
@@ -394,18 +393,16 @@ class Simulation:
         while sum(species_allocation.values()) < remaining:
             species_allocation[random.choice(list(species_allocation.keys()))] += 1
 
+        rank_by_fitness = lambda g: g.fitness
+
         for species_num in species_allocation:
-            # create an offspring by crossing over within this species
-            # use ~~roulette wheel selection~~ rank based
-            species_n = self.species_size[species_num]
-            # print(f'species #{species_num}, popsize = {species_n}, allocation = {species_allocation[species_num]}')
-            proportional_prob = [e**(rank / species_n) for rank in range(species_n, 0, -1)]
-            # print(f'probabilities: {proportional_prob}')
-            # print(f'fitnesses: {[n.fitness for n in self.species[species_num]['children']]}')
             for _ in range(species_allocation[species_num]):
-                parent1, parent2 = random.choices(self.species[species_num]['children'], weights = proportional_prob, k = 2)
+                tournament1 = random.choices(self.species[species_num]['children'], k = 3)
+                tournament2 = random.choices(self.species[species_num]['children'], k = 3)
+                parent1, parent2 = max(tournament1, key = rank_by_fitness), max(tournament2, key = rank_by_fitness)
                 offspring = nn.NetworkGenome.from_crossover(parent1, parent2)
                 next_gen.append(offspring)
+    
         # update self.genomes + clear self.sandboxes
         self.genomes = next_gen
         self.sandboxes = []

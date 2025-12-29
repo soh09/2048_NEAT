@@ -19,7 +19,8 @@ class Sandbox:
         self.debug = debug
         self.last_move = None
         self.normalize_input = normalize_input
-        self.accumulated_penalty_factor = 1
+        self.invalid_moves = 0
+        self.valid_moves = 0
 
     def set_input(self):
         # set the input
@@ -39,35 +40,33 @@ class Sandbox:
         
         made_move = False
 
-        for i, move in enumerate(moves_sorted_by_activation):
+        for _, move in enumerate(moves_sorted_by_activation):
 
             move_str = Sandbox.neuron_to_move[move]
             self.last_move = move_str
             new_game_state = self.game.do_next_move_and_track(move_str, self.debug)
 
             if new_game_state != 'board unchanged':
-                self.accumulated_penalty_factor *= (INTENT_PENALTY ** i)
+                self.valid_moves += 1
                 made_move = True
 
-                reward = self.game.get_reward() * self.accumulated_penalty_factor
+                reward = self.game.get_reward() * (self.valid_moves / (self.invalid_moves + self.valid_moves))
                 if not frozen:
                     self.network.set_fitness(reward)
                 else:
                     self.network.genome.temp_fitness = reward
 
                 if new_game_state == 'lose':
-                    print(self.accumulated_penalty_factor)
                     raise GameLostException(f'Game lost at score {reward}')
                 elif new_game_state == 'win':
-                    print(self.accumulated_penalty_factor)
                     raise GameWonException('Game won')
                 break # to prevent AI from making 4 moves in a single turn!
+            else:
+                self.invalid_moves += 1
             
         # if, after doing all moves, we still haven't moved
         if made_move == False:
-            self.accumulated_penalty_factor *= (INTENT_PENALTY ** i)
-            print(self.accumulated_penalty_factor)
-            reward = self.game.get_reward() * self.accumulated_penalty_factor
+            reward = self.game.get_reward() * (self.valid_moves / (self.invalid_moves + self.valid_moves))
             if not frozen:
                 self.network.set_fitness(reward)
             else:
@@ -84,9 +83,10 @@ class Sandbox:
     # called once per game, at the end, to reset board state
     def factory_reset(self):
         self.game.reset()
-        self.accumulated_penalty_factor = 1
         self.last_move = None
         self.previous_state = self.game.get_board()
+        self.valid_moves = 0
+        self.invalid_moves = 0
 
 
 class GameLostException(Exception):

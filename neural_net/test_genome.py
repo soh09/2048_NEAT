@@ -2,10 +2,10 @@ from neural_net.nn import Network, NetworkGenome
 from sim.Sandbox import Sandbox
 from sim.constants import REWARD_TYPE
 
-def print_histories(fitnesses, scores, per_row=10):
+def print_histories(fitnesses, scores, accuracies, per_row=10):
     # 1. Calculate the Global Max Width across BOTH lists
     #    (We look at every number in both lists to find the widest one)
-    all_data = fitnesses + scores
+    all_data = fitnesses + scores + accuracies
     if not all_data:
         width = 5 
     else:
@@ -21,8 +21,9 @@ def print_histories(fitnesses, scores, per_row=10):
         print(s)
 
     # 3. Print both
-    _print_sublist("Full Fitness History", fitnesses)
-    _print_sublist("Full Scores History ", scores)
+    _print_sublist("Full Fitness History  ", fitnesses)
+    _print_sublist("Full Scores History   ", scores)
+    _print_sublist("Full Accuracy History ", accuracies)
 
 def test_genome(obj):
 
@@ -42,6 +43,7 @@ def test_genome(obj):
     fitnesses = []
     scores = []
     move_hist = []
+    accuracies = []
     samples = 10
 
     move_dict = {
@@ -54,6 +56,8 @@ def test_genome(obj):
     for _ in range(samples):
         # print(sandbox.game)
         hist = []
+        net = Network(genome)
+        sandbox = Sandbox(net, reward=REWARD_TYPE)
         while True:
             try:
                 sandbox.set_input()
@@ -65,22 +69,26 @@ def test_genome(obj):
                 # Return fitness when game ends
                 fitnesses.append(sandbox.network.genome.temp_fitness)
                 scores.append(sandbox.game.score)
+                accuracies.append(sandbox.valid_moves / (sandbox.invalid_moves + sandbox.valid_moves))
                 # print(sandbox.game)
                 sandbox.factory_reset()
                 break
         move_hist.append(hist)
     avg_fitness = sum(fitnesses) / samples
     avg_score = sum(scores) / samples
+    avg_acc = sum(accuracies) / samples
     # Pre-calculate min/max to keep the f-string clean
     min_fit, max_fit = min(fitnesses), max(fitnesses)
     min_scr, max_scr = min(scores), max(scores)
+    min_acc, max_acc = min(accuracies), max(accuracies)
     print(f'Stats from running {samples} simulations')
-    print(f'''_________________________________________
-| Metric  |   Mean   |   Min   |   Max   |
-|_________|__________|_________|_________|
-| Fitness | {avg_fitness:8.2f} | {min_fit:7.2f} | {max_fit:7.2f} |
-| Score   | {avg_score:8.2f} | {min_scr:7.2f} | {max_scr:7.2f} |
-|_________|__________|_________|_________|''')
-    print_histories(fitnesses, scores)
+    print(f'''__________________________________________
+| Metric   |   Mean   |   Min   |   Max   |
+|__________|__________|_________|_________|
+| Fitness  | {avg_fitness:8.2f} | {min_fit:7.2f} | {max_fit:7.2f} |
+| Score    | {avg_score:8.2f} | {min_scr:7.2f} | {max_scr:7.2f} |
+| Accuracy | {avg_acc:8.2f} | {min_acc:7.2f} | {max_acc:7.2f} |
+|__________|__________|_________|_________|''')
+    print_histories(fitnesses, scores, accuracies)
     print("\n".join(f"[{''.join(hist)}]" for hist in move_hist))
 
